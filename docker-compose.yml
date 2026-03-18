@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  oracle-xe:
+    image: container-registry.oracle.com/database/express:21.3.0-xe
+    container_name: oracle-xe-21c
+    restart: unless-stopped
+    ports:
+      - "1521:1521" # Oracle listener
+      - "5500:5500" # Oracle EM Express
+    environment:
+      ORACLE_PWD: "Oracle123!"
+      ORACLE_CHARACTERSET: "AL32UTF8"
+    volumes:
+      - oracle-xe-data:/opt/oracle/oradata
+      - ./init_scripts:/opt/oracle/scripts/startup
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -s system/$${ORACLE_PWD}@localhost:1521/XEPDB1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: oracle-flyway
+    depends_on:
+      oracle-xe:
+        condition: service_healthy
+    command: migrate
+    environment:
+      FLYWAY_URL: jdbc:oracle:thin:@oracle-xe:1521/XEPDB1
+      FLYWAY_USER: airbnb
+      FLYWAY_PASSWORD: "Oracle123!"
+      FLYWAY_CONNECT_RETRIES: 60
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_BASELINE_VERSION: "0"
+    volumes:
+      - ./migrations:/flyway/sql
+
+volumes:
+  oracle-xe-data:
