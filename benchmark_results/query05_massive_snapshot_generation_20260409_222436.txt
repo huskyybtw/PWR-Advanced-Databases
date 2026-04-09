@@ -1,0 +1,70 @@
+Query Name: query05_massive_snapshot_generation
+SQL File: query05_massive_snapshot_generation.sql
+Statement Type: INSERT
+Started At: 2026-04-09T22:24:36.935404
+Duration (s): 0.0632
+Rows Impacted: 0
+-- SQL --
+INSERT INTO listing_scrape_snapshot (
+    listing_id,
+    scrape_id,
+    scraped_at,
+    price,
+    minimum_nights,
+    number_of_reviews,
+    last_review
+)
+SELECT
+    l.listing_id,
+    1001 AS scrape_id,
+    CURRENT_DATE AS scraped_at,
+    ROUND(AVG(c.price) * 1.05, 2) AS price,
+    MIN(c.minimum_nights) AS minimum_nights,
+    COUNT(r.review_id) AS number_of_reviews,
+    MAX(r."date") AS last_review
+FROM listings l
+JOIN calendar c ON l.listing_id = c.listing_id
+LEFT JOIN reviews r ON l.listing_id = r.listing_id
+WHERE c."date" BETWEEN CURRENT_DATE AND CURRENT_DATE + 30
+  AND c.available = 1
+  AND l.room_type IN ('Entire home/apt', 'Private room')
+  AND l.instant_bookable = 1
+GROUP BY l.listing_id
+HAVING COUNT(r.review_id) >= 10
+   AND AVG(c.price) > 50
+   AND MIN(c.minimum_nights) <= 3
+-- Execution Plan --
+Plan hash value: 2642773307
+ 
+-------------------------------------------------------------------------------------------------------------
+| Id  | Operation                         | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                  |                         | 16348 |  3895K|   119K  (1)| 00:00:05 |
+|   1 |  LOAD TABLE CONVENTIONAL          | LISTING_SCRAPE_SNAPSHOT |       |       |            |          |
+|*  2 |   FILTER                          |                         |       |       |            |          |
+|   3 |    HASH GROUP BY                  |                         | 16348 |  3895K|   119K  (1)| 00:00:05 |
+|*  4 |     FILTER                        |                         |       |       |            |          |
+|*  5 |      HASH JOIN OUTER              |                         | 16348 |  3895K|   119K  (1)| 00:00:05 |
+|   6 |       NESTED LOOPS                |                         |    58 | 12122 |  3919   (1)| 00:00:01 |
+|   7 |        NESTED LOOPS               |                         |    58 | 12122 |  3919   (1)| 00:00:01 |
+|*  8 |         TABLE ACCESS FULL         | CALENDAR                |    58 |  3132 |  3861   (1)| 00:00:01 |
+|*  9 |         INDEX UNIQUE SCAN         | LISTINGS_PK             |     1 |       |     0   (0)| 00:00:01 |
+|* 10 |        TABLE ACCESS BY INDEX ROWID| LISTINGS                |     1 |   155 |     1   (0)| 00:00:01 |
+|  11 |       TABLE ACCESS FULL           | REVIEWS                 |  4130K|   137M|   115K  (1)| 00:00:05 |
+-------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter(COUNT("R"."REVIEW_ID")>=10 AND SUM("C"."PRICE")/TO_BINARY_DOUBLE(COUNT("C"."PRICE"))>5.
+              0E+001D AND MIN("C"."MINIMUM_NIGHTS")<=3)
+   4 - filter(CURRENT_DATE+30>=CURRENT_DATE)
+   5 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+   8 - filter("C"."AVAILABLE"=1 AND "C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
+   9 - access("L"."LISTING_ID"="C"."LISTING_ID")
+  10 - filter(("L"."ROOM_TYPE"='Entire home/apt' OR "L"."ROOM_TYPE"='Private room') AND 
+              "L"."INSTANT_BOOKABLE"=1)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
