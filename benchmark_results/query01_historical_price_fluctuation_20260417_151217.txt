@@ -1,0 +1,120 @@
+Query Name: query01_historical_price_fluctuation
+SQL File: query01_historical_price_fluctuation.sql
+Statement Type: SELECT
+Started At: 2026-04-17T15:12:17.515148
+Duration (s): 4.1044
+Rows Impacted: 7344
+-- SQL --
+WITH
+    calendar_stats AS (
+        SELECT
+            c.listing_id,
+            AVG(c.price) AS avg_price_dec,
+            SUM(
+                CASE
+                    WHEN c.available = 1 THEN 1
+                    ELSE 0
+                END
+            ) AS available_days_dec,
+            COUNT(*) AS total_days_dec
+        FROM calendar c
+        WHERE
+            c."date" >= DATE '2025-12-01'
+            AND c."date" < DATE '2026-01-01'
+        GROUP BY
+            c.listing_id
+    ),
+    review_stats AS (
+        SELECT
+            r.listing_id,
+            COUNT(*) AS review_count,
+            MAX(r."date") AS last_review_date
+        FROM reviews r
+        WHERE
+            r."date" >= ADD_MONTHS(DATE '2025-12-31', -12)
+        GROUP BY
+            r.listing_id
+    ),
+    city_price_avg AS (
+        SELECT loc.location_id, AVG(cs.avg_price_dec) AS city_avg_price
+        FROM
+            calendar_stats cs
+            JOIN listings l ON l.listing_id = cs.listing_id
+            JOIN neighbourhoods n ON n.neighbourhood_id = l.neighbourhood_id
+            JOIN locations loc ON loc.location_id = n.location_id
+        GROUP BY
+            loc.location_id
+    )
+SELECT loc.location_name, n.neighbourhood, l.listing_id, l.name, h.host_name, cs.avg_price_dec, cs.available_days_dec, rs.review_count, rs.last_review_date
+FROM
+    listings l
+    JOIN hosts h ON h.host_id = l.host_id
+    JOIN neighbourhoods n ON n.neighbourhood_id = l.neighbourhood_id
+    JOIN locations loc ON loc.location_id = n.location_id
+    JOIN calendar_stats cs ON cs.listing_id = l.listing_id
+    LEFT JOIN review_stats rs ON rs.listing_id = l.listing_id
+    JOIN city_price_avg cpa ON cpa.location_id = loc.location_id
+WHERE
+    cs.avg_price_dec > cpa.city_avg_price
+    AND cs.available_days_dec >= 20
+    AND NVL(rs.review_count, 0) <= 2
+ORDER BY cs.avg_price_dec DESC, cs.available_days_dec DESC
+-- Execution Plan --
+Plan hash value: 4051864869
+ 
+------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           |   156G|    98T|       |  5127M  (1)| 55:38:20 |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6634_374A58 |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |                           |  3879K|   151M|       |  6743   (3)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL                    | CALENDAR                  |  3879K|   151M|       |  6638   (1)| 00:00:01 |
+|   5 |   SORT ORDER BY                          |                           |   156G|    98T|   106T|  5127M  (1)| 55:38:20 |
+|*  6 |    HASH JOIN                             |                           |   156G|    98T|   114M|  9948K (86)| 00:06:29 |
+|   7 |     VIEW                                 |                           |  3879K|    70M|       | 15407   (2)| 00:00:01 |
+|   8 |      HASH GROUP BY                       |                           |  3879K|   262M|       | 15407   (2)| 00:00:01 |
+|*  9 |       HASH JOIN                          |                           |  3879K|   262M|       | 15302   (1)| 00:00:01 |
+|  10 |        TABLE ACCESS FULL                 | NEIGHBOURHOODS            |  4781 |   121K|       |     9   (0)| 00:00:01 |
+|* 11 |        HASH JOIN                         |                           |  3879K|   166M|  2816K| 15282   (1)| 00:00:01 |
+|  12 |         TABLE ACCESS FULL                | LISTINGS                  | 75809 |  1924K|       |  3568   (1)| 00:00:01 |
+|  13 |         VIEW                             |                           |  3879K|    70M|       |  5871   (1)| 00:00:01 |
+|  14 |          TABLE ACCESS FULL               | SYS_TEMP_0FD9D6634_374A58 |  3879K|   151M|       |  5871   (1)| 00:00:01 |
+|* 15 |     HASH JOIN                            |                           |    33M|    21G|       |   162K  (1)| 00:00:07 |
+|  16 |      TABLE ACCESS FULL                   | LOCATIONS                 |    42 |  5964 |       |     3   (0)| 00:00:01 |
+|* 17 |      HASH JOIN                           |                           |    33M|    16G|       |   162K  (1)| 00:00:07 |
+|  18 |       TABLE ACCESS FULL                  | NEIGHBOURHOODS            |  4781 |   723K|       |     9   (0)| 00:00:01 |
+|* 19 |       HASH JOIN                          |                           |    33M|    11G|   162M|   161K  (1)| 00:00:07 |
+|* 20 |        VIEW                              |                           |  3879K|   118M|       |  5871   (1)| 00:00:01 |
+|  21 |         TABLE ACCESS FULL                | SYS_TEMP_0FD9D6634_374A58 |  3879K|   151M|       |  5871   (1)| 00:00:01 |
+|* 22 |        FILTER                            |                           |       |       |       |            |          |
+|* 23 |         HASH JOIN OUTER                  |                           |   663K|   218M|    23M|   136K  (1)| 00:00:06 |
+|* 24 |          HASH JOIN                       |                           | 75809 |    22M|  9152K|  5408   (1)| 00:00:01 |
+|  25 |           TABLE ACCESS FULL              | HOSTS                     | 60808 |  8432K|       |   751   (1)| 00:00:01 |
+|  26 |           TABLE ACCESS FULL              | LISTINGS                  | 75809 |    12M|       |  3568   (1)| 00:00:01 |
+|  27 |          VIEW                            |                           |   663K|    22M|       |   128K  (1)| 00:00:06 |
+|  28 |           HASH GROUP BY                  |                           |   663K|    13M|       |   128K  (1)| 00:00:06 |
+|* 29 |            TABLE ACCESS FULL             | REVIEWS                   |   663K|    13M|       |   128K  (1)| 00:00:06 |
+------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   4 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   6 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
+       filter("CS"."AVG_PRICE_DEC">"CPA"."CITY_AVG_PRICE")
+   9 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  11 - access("L"."LISTING_ID"="CS"."LISTING_ID")
+  15 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
+  17 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  19 - access("CS"."LISTING_ID"="L"."LISTING_ID")
+  20 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
+  22 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
+  23 - access("RS"."LISTING_ID"(+)="L"."LISTING_ID")
+  24 - access("H"."HOST_ID"="L"."HOST_ID")
+  29 - filter("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

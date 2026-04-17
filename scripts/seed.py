@@ -524,19 +524,9 @@ def run_seed():
         cursor.execute("SELECT NVL(MAX(location_id), 0) FROM locations")
         location_id = cursor.fetchone()[0]
 
-        limit_cities = (
-            10  # Reduced to only process the hardcoded TARGET_CITIES (10 total)
-        )
-
         overall_start_time = time.time()
 
-        for idx, (city_key, data_info) in enumerate(cities.items()):
-            if idx >= limit_cities:
-                print(
-                    f"\n[!] Reached limit of {limit_cities} cities. Set higher in script to process more."
-                )
-                break
-
+        for city_key, data_info in cities.items():
             country, state, city = city_key
             location_id += 1
 

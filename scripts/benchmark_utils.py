@@ -1,7 +1,7 @@
 import datetime
 import time
 
-from scripts.db import BASE_DIR, get_connection, load_query
+from scripts.db import BASE_DIR, get_admin_connection, get_connection, load_query
 
 RESULTS_DIR = BASE_DIR / "benchmark_results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -25,9 +25,31 @@ def _count_rows(cursor, batch_size=1000):
     return total
 
 
+def _flush_database_memory():
+    try:
+        conn = get_admin_connection()
+    except Exception:
+        return
+
+    try:
+        cursor = conn.cursor()
+        for statement in (
+            "ALTER SYSTEM FLUSH SHARED_POOL",
+            "ALTER SYSTEM FLUSH BUFFER_CACHE",
+        ):
+            try:
+                cursor.execute(statement)
+            except Exception as exc:
+                print(f"[!] Skipping {statement}: {exc}")
+    finally:
+        conn.close()
+
+
 def run_benchmark(query_name, sql_file, statement_type="select"):
     sql = load_query(sql_file)
     statement = statement_type.lower()
+
+    _flush_database_memory()
 
     conn = get_connection()
     try:
@@ -52,6 +74,7 @@ def run_benchmark(query_name, sql_file, statement_type="select"):
             conn.rollback()
         finally:
             conn.close()
+        _flush_database_memory()
 
     output_lines = [
         f"Query Name: {query_name}",

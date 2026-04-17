@@ -5,6 +5,8 @@ from pathlib import Path
 PASSWORD = "Oracle123!"
 DSN = "localhost:1521/XEPDB1"
 USER = "airbnb"
+ADMIN_USER = "system"
+ADMIN_PASSWORD = PASSWORD
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 QUERIES_DIR = BASE_DIR / "queries"
@@ -20,6 +22,16 @@ def get_connection():
         return connection
     except Exception as e:
         print(f"[!] Failed to connect to DB: {e}")
+        raise
+
+
+def get_admin_connection():
+    """Create a privileged connection for maintenance operations."""
+    try:
+        connection = oracledb.connect(user=ADMIN_USER, password=ADMIN_PASSWORD, dsn=DSN)
+        return connection
+    except Exception as e:
+        print(f"[!] Failed to connect to DB as admin: {e}")
         raise
 
 

@@ -1,32 +1,56 @@
 BEGIN TRANSACTION;
 -- Potential Monthly Revenue
+WITH
+    host_listing_stats AS (
+        SELECT
+            l.host_id,
+            COUNT(DISTINCT l.listing_id) AS listings_cnt,
+            COUNT(DISTINCT l.neighbourhood_id) AS neighbourhoods_cnt
+        FROM listings l
+        GROUP BY
+            l.host_id
+    ),
+    host_review_stats AS (
+        SELECT l.host_id, COUNT(r.review_id) AS total_reviews
+        FROM listings l
+            JOIN reviews r ON r.listing_id = l.listing_id
+        GROUP BY
+            l.host_id
+    ),
+    host_price_stats AS (
+        SELECT l.host_id, AVG(c.price) AS avg_price
+        FROM listings l
+            JOIN calendar c ON c.listing_id = l.listing_id
+        WHERE
+            c."date" >= DATE '2025-12-01'
+            AND c."date" < DATE '2026-01-01'
+        GROUP BY
+            l.host_id
+    )
 SELECT
-    l.location_name,
-    n.neighbourhood,
-    COUNT(DISTINCT lst.listing_id) AS total_listings,
-    SUM(c.price) AS potential_monthly_revenue
-FROM locations l
-JOIN neighbourhoods n ON l.location_id = n.location_id
-JOIN listings lst ON n.neighbourhood_id = lst.neighbourhood_id
-JOIN calendar c ON lst.listing_id = c.listing_id
-WHERE c.available = 1
-  AND c."date" BETWEEN CURRENT_DATE AND CURRENT_DATE + 30
-  AND c.price BETWEEN 10 AND 5000
-  AND lst.accommodates >= 2
-GROUP BY
-    l.location_id,
-    l.location_name,
-    n.neighbourhood_id,
-    n.neighbourhood
-HAVING AVG(c.price) > (
-           SELECT AVG(c2.price)
-           FROM listings lst2
-           JOIN neighbourhoods n2 ON lst2.neighbourhood_id = n2.neighbourhood_id
-           JOIN calendar c2 ON lst2.listing_id = c2.listing_id
-           WHERE n2.location_id = l.location_id
-             AND c2.available = 1
-       )
-   AND SUM(c.price) > 50000
-ORDER BY potential_monthly_revenue DESC;
+    h.host_id,
+    h.host_name,
+    h.host_since,
+    h.host_is_superhost,
+    hls.listings_cnt,
+    hls.neighbourhoods_cnt,
+    hrs.total_reviews,
+    hps.avg_price,
+    DENSE_RANK() OVER (
+        ORDER BY hrs.total_reviews DESC, hps.avg_price DESC
+    ) AS host_rank
+FROM
+    hosts h
+    JOIN host_listing_stats hls ON hls.host_id = h.host_id
+    JOIN host_review_stats hrs ON hrs.host_id = h.host_id
+    JOIN host_price_stats hps ON hps.host_id = h.host_id
+WHERE
+    hls.listings_cnt >= 3
+    AND hls.neighbourhoods_cnt >= 2
+    AND hrs.total_reviews > (
+        SELECT AVG(total_reviews)
+        FROM host_review_stats
+    )
+ORDER BY host_rank;
 
 ROLLBACK;
