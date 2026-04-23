@@ -57,18 +57,22 @@ def run_benchmark(query_name, sql_file, statement_type="select"):
         plan_text = _collect_plan(cursor, sql)
 
         started_at = datetime.datetime.now()
-        timer_start = time.perf_counter()
+        execute_start = time.perf_counter()
         cursor.execute(sql)
+        execute_duration = time.perf_counter() - execute_start
 
+        fetch_duration = 0.0
         if statement == "select":
+            fetch_start = time.perf_counter()
             rowcount = _count_rows(cursor)
+            fetch_duration = time.perf_counter() - fetch_start
         else:
             rowcount = cursor.rowcount
 
         if rowcount is None:
             rowcount = -1
 
-        duration = time.perf_counter() - timer_start
+        duration = execute_duration + fetch_duration
     finally:
         try:
             conn.rollback()
@@ -81,11 +85,13 @@ def run_benchmark(query_name, sql_file, statement_type="select"):
         f"SQL File: {sql_file}",
         f"Statement Type: {statement_type.upper()}",
         f"Started At: {started_at.isoformat()}",
-        f"Duration (s): {duration:.4f}",
+        f"Execution Duration (s): {execute_duration:.4f}",
+        f"Fetch Duration (s): {fetch_duration:.4f}",
+        f"Total Duration (s): {duration:.4f}",
         f"Rows Impacted: {rowcount}",
         "-- SQL --",
         sql,
-        "-- Execution Plan --",
+        "-- Estimated Execution Plan --",
         plan_text,
     ]
 

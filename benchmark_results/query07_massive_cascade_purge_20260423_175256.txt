@@ -1,0 +1,72 @@
+Query Name: query07_massive_cascade_purge
+SQL File: query07_massive_cascade_purge.sql
+Statement Type: DELETE
+Started At: 2026-04-23T17:52:56.537094
+Execution Duration (s): 0.3287
+Fetch Duration (s): 0.0000
+Total Duration (s): 0.3287
+Rows Impacted: 0
+-- SQL --
+DELETE FROM calendar c
+WHERE c."date" < CURRENT_DATE - 365
+  AND c.listing_id IN (
+      SELECT l.listing_id
+      FROM listings l
+      JOIN hosts h ON l.host_id = h.host_id
+      LEFT JOIN reviews r ON l.listing_id = r.listing_id
+        AND r."date" >= CURRENT_DATE - 365
+      LEFT JOIN calendar c_recent ON l.listing_id = c_recent.listing_id
+        AND c_recent."date" BETWEEN CURRENT_DATE - 30 AND CURRENT_DATE
+        AND c_recent.available = 0
+      LEFT JOIN listing_scrape_snapshot snap ON l.listing_id = snap.listing_id
+        AND snap.scraped_at >= CURRENT_DATE - 365
+      WHERE h.host_is_superhost = 0
+      GROUP BY l.listing_id
+      HAVING COUNT(r.review_id) = 0
+         AND COUNT(c_recent.calendar_id) = 0
+         AND MAX(snap.price) = MIN(snap.price)
+  )
+-- Estimated Execution Plan --
+Plan hash value: 2064377530
+ 
+--------------------------------------------------------------------------------------------------------------
+| Id  | Operation                  | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+--------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT           |                         |     1 |    39 |       |   148K  (1)| 00:00:06 |
+|   1 |  DELETE                    | CALENDAR                |       |       |       |            |          |
+|*  2 |   HASH JOIN SEMI           |                         |     1 |    39 |       |   148K  (1)| 00:00:06 |
+|*  3 |    TABLE ACCESS FULL       | CALENDAR                |     1 |    26 |       |  6731   (2)| 00:00:01 |
+|   4 |    VIEW                    | VW_NSO_1                |     1 |    13 |       |   141K  (1)| 00:00:06 |
+|*  5 |     FILTER                 |                         |       |       |       |            |          |
+|   6 |      SORT GROUP BY         |                         |     1 |   111 |       |   141K  (1)| 00:00:06 |
+|*  7 |       HASH JOIN RIGHT OUTER|                         |   656K|    69M|       |   141K  (1)| 00:00:06 |
+|*  8 |        TABLE ACCESS FULL   | CALENDAR                | 27726 |   703K|       |  6682   (2)| 00:00:01 |
+|*  9 |        HASH JOIN OUTER     |                         |   618K|    50M|  7008K|   135K  (1)| 00:00:06 |
+|* 10 |         HASH JOIN OUTER    |                         |   115K|  5649K|  2160K|  5120   (1)| 00:00:01 |
+|* 11 |          HASH JOIN         |                         | 58117 |  1475K|       |  4319   (1)| 00:00:01 |
+|* 12 |           TABLE ACCESS FULL| HOSTS                   | 34579 |   337K|       |   751   (1)| 00:00:01 |
+|  13 |           TABLE ACCESS FULL| LISTINGS                | 83208 |  1300K|       |  3568   (1)| 00:00:01 |
+|* 14 |          TABLE ACCESS FULL | LISTING_SCRAPE_SNAPSHOT |   164K|  3855K|       |   415   (2)| 00:00:01 |
+|* 15 |         TABLE ACCESS FULL  | REVIEWS                 |   361K|    12M|       |   128K  (1)| 00:00:06 |
+--------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   3 - filter("C"."date"<CURRENT_DATE-365)
+   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
+              MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+   7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+   8 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)>=CURRENT_DATE-30 AND 
+              "C_RECENT"."date"(+)<=CURRENT_DATE)
+   9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+  10 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+  11 - access("L"."HOST_ID"="H"."HOST_ID")
+  12 - filter("H"."HOST_IS_SUPERHOST"=0)
+  14 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+  15 - filter("R"."date"(+)>=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
