@@ -1,0 +1,122 @@
+
+===================================================================================================================
+                                                 COMPARISON REPORT                                                 
+===================================================================================================================
+Query      | Metric          | idx_calendar_listing_id | idx_calendar_covering | Diff (%)   | Status          | Plan Changed
+-------------------------------------------------------------------------------------------------------------------
+query01    | Duration (Avg)  | 2.4695          | 2.3107          | -6.43      | IMPROVED        | NO          
+           | Duration (Min)  | 2.3579          | 2.1996          | -          | -               |             
+           | Duration (Max)  | 2.5677          | 2.5200          | -          | -               |             
+           | Cost            | 155000.00       | 155000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query02    | Duration (Avg)  | 1.6333          | 1.5510          | -5.04      | IMPROVED        | NO          
+           | Duration (Min)  | 1.6029          | 1.4908          | -          | -               |             
+           | Duration (Max)  | 1.6496          | 1.5882          | -          | -               |             
+           | Cost            | 137000.00       | 137000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query03    | Duration (Avg)  | 2.1235          | 2.1819          | 2.75       | DEGRADED        | NO          
+           | Duration (Min)  | 2.0973          | 2.1126          | -          | -               |             
+           | Duration (Max)  | 2.1557          | 2.2428          | -          | -               |             
+           | Cost            | 182000.00       | 182000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query04    | Duration (Avg)  | 1.4288          | 1.5156          | 6.08       | DEGRADED        | NO          
+           | Duration (Min)  | 1.3749          | 1.4742          | -          | -               |             
+           | Duration (Max)  | 1.4626          | 1.5564          | -          | -               |             
+           | Cost            | 133000.00       | 133000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query05    | Duration (Avg)  | 4.1813          | 4.1780          | -0.08      | SAME            | NO          
+           | Duration (Min)  | 4.1384          | 4.1422          | -          | -               |             
+           | Duration (Max)  | 4.2372          | 4.2361          | -          | -               |             
+           | Cost            | 396000.00       | 396000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query06    | Duration (Avg)  | 0.3609          | 0.3561          | -1.33      | IMPROVED        | NO          
+           | Duration (Min)  | 0.3473          | 0.3273          | -          | -               |             
+           | Duration (Max)  | 0.3865          | 0.3791          | -          | -               |             
+           | Cost            | 136000.00       | 136000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+query07    | Duration (Avg)  | 2.5588          | 2.3461          | -8.31      | IMPROVED        | YES         
+           | Duration (Min)  | 2.4948          | 2.2892          | -          | -               |             
+           | Duration (Max)  | 2.5982          | 2.4579          | -          | -               |             
+           | Cost            | 141000.00       | 141000.00       | 0.00       | SAME            |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query07 ---
+--- idx_calendar_listing_id Plan
++++ idx_calendar_covering Plan
+@@ -1,44 +1,41 @@
+-Plan hash value: 3927586441
++Plan hash value: 4033563176
+  
+------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                     | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------
+-|   0 | DELETE STATEMENT              |                         |     1 |    39 |       |   141K  (1)| 00:00:06 |
+-|   1 |  DELETE                       | CALENDAR                |       |       |       |            |          |
+-|   2 |   NESTED LOOPS                |                         |     1 |    39 |       |   141K  (1)| 00:00:06 |
+-|   3 |    NESTED LOOPS               |                         |    58 |    39 |       |   141K  (1)| 00:00:06 |
+-|   4 |     VIEW                      | VW_NSO_1                |     1 |    13 |       |   141K  (1)| 00:00:06 |
+-|*  5 |      FILTER                   |                         |       |       |       |            |          |
+-|   6 |       SORT GROUP BY           |                         |     1 |   111 |       |   141K  (1)| 00:00:06 |
+-|*  7 |        HASH JOIN RIGHT OUTER  |                         |   633K|    67M|       |   141K  (1)| 00:00:06 |
+-|*  8 |         TABLE ACCESS FULL     | CALENDAR                | 27726 |   703K|       |  6682   (2)| 00:00:01 |
+-|*  9 |         HASH JOIN OUTER       |                         |   597K|    48M|  7008K|   135K  (1)| 00:00:06 |
+-|* 10 |          HASH JOIN OUTER      |                         |   115K|  5649K|  2160K|  5120   (1)| 00:00:01 |
+-|* 11 |           HASH JOIN           |                         | 58117 |  1475K|       |  4319   (1)| 00:00:01 |
+-|* 12 |            TABLE ACCESS FULL  | HOSTS                   | 34579 |   337K|       |   751   (1)| 00:00:01 |
+-|  13 |            TABLE ACCESS FULL  | LISTINGS                | 83208 |  1300K|       |  3568   (1)| 00:00:01 |
+-|* 14 |           TABLE ACCESS FULL   | LISTING_SCRAPE_SNAPSHOT |   164K|  3855K|       |   415   (2)| 00:00:01 |
+-|* 15 |          TABLE ACCESS FULL    | REVIEWS                 |   346K|    11M|       |   128K  (1)| 00:00:06 |
+-|* 16 |     INDEX RANGE SCAN          | IDX_CALENDAR_LISTING_ID |    58 |       |       |     2   (0)| 00:00:01 |
+-|* 17 |    TABLE ACCESS BY INDEX ROWID| CALENDAR                |     1 |    26 |       |     5   (0)| 00:00:01 |
+------------------------------------------------------------------------------------------------------------------
++--------------------------------------------------------------------------------------------------------------
++| Id  | Operation                  | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++--------------------------------------------------------------------------------------------------------------
++|   0 | DELETE STATEMENT           |                         |     1 |    39 |       |   141K  (1)| 00:00:06 |
++|   1 |  DELETE                    | CALENDAR                |       |       |       |            |          |
++|   2 |   NESTED LOOPS             |                         |     1 |    39 |       |   141K  (1)| 00:00:06 |
++|   3 |    VIEW                    | VW_NSO_1                |     1 |    13 |       |   141K  (1)| 00:00:06 |
++|*  4 |     FILTER                 |                         |       |       |       |            |          |
++|   5 |      SORT GROUP BY         |                         |     1 |   111 |       |   141K  (1)| 00:00:06 |
++|*  6 |       HASH JOIN RIGHT OUTER|                         |   633K|    67M|       |   141K  (1)| 00:00:06 |
++|*  7 |        TABLE ACCESS FULL   | CALENDAR                | 27726 |   703K|       |  6682   (2)| 00:00:01 |
++|*  8 |        HASH JOIN OUTER     |                         |   597K|    48M|  7008K|   135K  (1)| 00:00:06 |
++|*  9 |         HASH JOIN OUTER    |                         |   115K|  5649K|  2160K|  5120   (1)| 00:00:01 |
++|* 10 |          HASH JOIN         |                         | 58117 |  1475K|       |  4319   (1)| 00:00:01 |
++|* 11 |           TABLE ACCESS FULL| HOSTS                   | 34579 |   337K|       |   751   (1)| 00:00:01 |
++|  12 |           TABLE ACCESS FULL| LISTINGS                | 83208 |  1300K|       |  3568   (1)| 00:00:01 |
++|* 13 |          TABLE ACCESS FULL | LISTING_SCRAPE_SNAPSHOT |   164K|  3855K|       |   415   (2)| 00:00:01 |
++|* 14 |         TABLE ACCESS FULL  | REVIEWS                 |   346K|    11M|       |   128K  (1)| 00:00:06 |
++|* 15 |    INDEX RANGE SCAN        | IDX_CALENDAR_COVERING   |     1 |    26 |       |     2   (0)| 00:00:01 |
++--------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+-   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
++   4 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
+               MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+-   7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+-   8 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)>=CURRENT_DATE-30 AND 
++   6 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
++   7 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)>=CURRENT_DATE-30 AND 
+               "C_RECENT"."date"(+)<=CURRENT_DATE)
+-   9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+-  10 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+-  11 - access("L"."HOST_ID"="H"."HOST_ID")
+-  12 - filter("H"."HOST_IS_SUPERHOST"=0)
+-  14 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+-  15 - filter("R"."date"(+)>=CURRENT_DATE-365)
+-  16 - access("C"."LISTING_ID"="LISTING_ID")
+-  17 - filter("C"."date"<CURRENT_DATE-365)
++   8 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
++   9 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
++  10 - access("L"."HOST_ID"="H"."HOST_ID")
++  11 - filter("H"."HOST_IS_SUPERHOST"=0)
++  13 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
++  14 - filter("R"."date"(+)>=CURRENT_DATE-365)
++  15 - access("C"."LISTING_ID"="LISTING_ID" AND "C"."date"<CURRENT_DATE-365)
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+===================================================================================================================
