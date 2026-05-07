@@ -45,7 +45,14 @@ def _flush_database_memory():
         conn.close()
 
 
-def run_benchmark(query_name, sql_file, statement_type="select"):
+def run_benchmark(
+    query_name,
+    sql_file,
+    statement_type="select",
+    tag="baseline",
+    run_index=None,
+    timestamp_override=None,
+):
     sql = load_query(sql_file)
     statement = statement_type.lower()
 
@@ -82,6 +89,8 @@ def run_benchmark(query_name, sql_file, statement_type="select"):
 
     output_lines = [
         f"Query Name: {query_name}",
+        f"Tag: {tag}",
+        f"Run Index: {run_index if run_index is not None else 'N/A'}",
         f"SQL File: {sql_file}",
         f"Statement Type: {statement_type.upper()}",
         f"Started At: {started_at.isoformat()}",
@@ -95,8 +104,9 @@ def run_benchmark(query_name, sql_file, statement_type="select"):
         plan_text,
     ]
 
-    timestamp = started_at.strftime("%Y%m%d_%H%M%S")
-    output_path = RESULTS_DIR / f"{query_name}_{timestamp}.txt"
+    timestamp = timestamp_override or started_at.strftime("%Y%m%d_%H%M%S")
+    suffix = f"_{tag}_run{run_index}" if run_index is not None else f"_{tag}"
+    output_path = RESULTS_DIR / f"{query_name}{suffix}_{timestamp}.txt"
     output_path.write_text("\n".join(output_lines), encoding="utf-8")
 
     return output_path

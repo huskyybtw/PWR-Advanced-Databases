@@ -1,0 +1,126 @@
+Query Name: query03_potential_monthly_revenue
+Tag: idx_reviews_listing_date
+Run Index: 2
+SQL File: query03_potential_monthly_revenue.sql
+Statement Type: SELECT
+Started At: 2026-05-07T16:06:13.956970
+Execution Duration (s): 1.0149
+Fetch Duration (s): 0.0087
+Total Duration (s): 1.0236
+Rows Impacted: 920
+-- SQL --
+WITH
+    host_listing_stats AS (
+        SELECT
+            l.host_id,
+            COUNT(DISTINCT l.listing_id) AS listings_cnt,
+            COUNT(DISTINCT l.neighbourhood_id) AS neighbourhoods_cnt
+        FROM listings l
+        GROUP BY
+            l.host_id
+    ),
+    host_review_stats AS (
+        SELECT l.host_id, COUNT(r.review_id) AS total_reviews
+        FROM listings l
+            JOIN reviews r ON r.listing_id = l.listing_id
+        GROUP BY
+            l.host_id
+    ),
+    host_price_stats AS (
+        SELECT l.host_id, AVG(c.price) AS avg_price
+        FROM listings l
+            JOIN calendar c ON c.listing_id = l.listing_id
+        WHERE
+            c."date" >= DATE '2025-12-01'
+            AND c."date" < DATE '2026-01-01'
+        GROUP BY
+            l.host_id
+    )
+SELECT
+    h.host_id,
+    h.host_name,
+    h.host_since,
+    h.host_is_superhost,
+    hls.listings_cnt,
+    hls.neighbourhoods_cnt,
+    hrs.total_reviews,
+    hps.avg_price,
+    DENSE_RANK() OVER (
+        ORDER BY hrs.total_reviews DESC, hps.avg_price DESC
+    ) AS host_rank
+FROM
+    hosts h
+    JOIN host_listing_stats hls ON hls.host_id = h.host_id
+    JOIN host_review_stats hrs ON hrs.host_id = h.host_id
+    JOIN host_price_stats hps ON hps.host_id = h.host_id
+WHERE
+    hls.listings_cnt >= 3
+    AND hls.neighbourhoods_cnt >= 2
+    AND hrs.total_reviews > (
+        SELECT AVG(total_reviews)
+        FROM host_review_stats
+    )
+ORDER BY host_rank
+-- Estimated Execution Plan --
+Plan hash value: 1705669621
+ 
+------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           |   121 | 11132 |       | 58960   (1)| 00:00:03 |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D665D_7811F0 |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |                           | 49508 |  2175K|   322M| 34083   (2)| 00:00:02 |
+|   4 |     MERGE JOIN                           |                           |  5982K|   256M|       |  9732   (2)| 00:00:01 |
+|   5 |      SORT JOIN                           |                           |  5982K|   148M|       |  5674   (4)| 00:00:01 |
+|   6 |       VIEW                               | VW_GBC_9                  |  5982K|   148M|       |  5674   (4)| 00:00:01 |
+|   7 |        HASH GROUP BY                     |                           |  5982K|    74M|       |  5674   (4)| 00:00:01 |
+|   8 |         INDEX FAST FULL SCAN             | IDX_REVIEWS_LISTING_DATE  |  5982K|    74M|       |  5508   (1)| 00:00:01 |
+|*  9 |      SORT JOIN                           |                           | 83208 |  1543K|  5240K|  4059   (1)| 00:00:01 |
+|  10 |       VIEW                               | VW_GBF_10                 | 83208 |  1543K|       |  3568   (1)| 00:00:01 |
+|  11 |        TABLE ACCESS FULL                 | LISTINGS                  | 83208 |  1300K|       |  3568   (1)| 00:00:01 |
+|  12 |   WINDOW SORT                            |                           |   121 | 11132 |       | 24878   (1)| 00:00:01 |
+|* 13 |    HASH JOIN                             |                           |   121 | 11132 |       | 24793   (1)| 00:00:01 |
+|  14 |     JOIN FILTER CREATE                   | :BF0000                   |   122 |  9638 |       |  3779   (1)| 00:00:01 |
+|* 15 |      HASH JOIN                           |                           |   122 |  9638 |       |  3779   (1)| 00:00:01 |
+|  16 |       NESTED LOOPS                       |                           |   124 |  7316 |       |  3695   (1)| 00:00:01 |
+|  17 |        NESTED LOOPS                      |                           |   124 |  7316 |       |  3695   (1)| 00:00:01 |
+|  18 |         VIEW                             |                           |   124 |  4092 |       |  3571   (1)| 00:00:01 |
+|* 19 |          FILTER                          |                           |       |       |       |            |          |
+|  20 |           HASH GROUP BY                  |                           |   124 |  2480 |       |  3571   (1)| 00:00:01 |
+|  21 |            TABLE ACCESS FULL             | LISTINGS                  | 83208 |  1625K|       |  3568   (1)| 00:00:01 |
+|* 22 |         INDEX UNIQUE SCAN                | HOSTS_PK                  |     1 |       |       |     0   (0)| 00:00:01 |
+|  23 |        TABLE ACCESS BY INDEX ROWID       | HOSTS                     |     1 |    26 |       |     1   (0)| 00:00:01 |
+|* 24 |       VIEW                               |                           | 49508 |   966K|       |    84   (0)| 00:00:01 |
+|  25 |        TABLE ACCESS FULL                 | SYS_TEMP_0FD9D665D_7811F0 | 49508 |   966K|       |    84   (0)| 00:00:01 |
+|  26 |        SORT AGGREGATE                    |                           |     1 |    13 |       |            |          |
+|  27 |         VIEW                             |                           | 49508 |   628K|       |    84   (0)| 00:00:01 |
+|  28 |          TABLE ACCESS FULL               | SYS_TEMP_0FD9D665D_7811F0 | 49508 |   966K|       |    84   (0)| 00:00:01 |
+|  29 |     VIEW                                 |                           | 49508 |   628K|       | 21014   (1)| 00:00:01 |
+|  30 |      HASH GROUP BY                       |                           | 49508 |  2127K|  3336K| 21014   (1)| 00:00:01 |
+|  31 |       JOIN FILTER USE                    | :BF0000                   | 65272 |  2804K|       | 20397   (1)| 00:00:01 |
+|* 32 |        HASH JOIN                         |                           | 65272 |  2804K|  2280K| 20397   (1)| 00:00:01 |
+|  33 |         TABLE ACCESS FULL                | LISTINGS                  | 83208 |  1300K|       |  3568   (1)| 00:00:01 |
+|  34 |         VIEW                             | VW_GBC_16                 | 65272 |  1784K|       | 16595   (1)| 00:00:01 |
+|  35 |          HASH GROUP BY                   |                           | 65272 |  1593K|   130M| 16595   (1)| 00:00:01 |
+|* 36 |           TABLE ACCESS FULL              | CALENDAR                  |  3785K|    90M|       |  6643   (1)| 00:00:01 |
+------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   9 - access("ITEM_1"="ITEM_1")
+       filter("ITEM_1"="ITEM_1")
+  13 - access("HPS"."HOST_ID"="H"."HOST_ID")
+  15 - access("HRS"."HOST_ID"="H"."HOST_ID")
+  19 - filter(COUNT(DISTINCT "L"."LISTING_ID")>=3 AND COUNT(DISTINCT "L"."NEIGHBOURHOOD_ID")>=2)
+  22 - access("HLS"."HOST_ID"="H"."HOST_ID")
+  24 - filter("HRS"."TOTAL_REVIEWS"> (SELECT SUM("TOTAL_REVIEWS")/COUNT("TOTAL_REVIEWS") FROM  (SELECT /*+ CACHE 
+              ("T1") */ "C0" "HOST_ID","C1" "TOTAL_REVIEWS" FROM "SYS"."SYS_TEMP_0FD9D665D_7811F0" "T1") "HOST_REVIEW_STATS"))
+  32 - access("ITEM_1"="L"."LISTING_ID")
+  36 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

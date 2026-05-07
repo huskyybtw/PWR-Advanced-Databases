@@ -10,6 +10,7 @@ ADMIN_PASSWORD = PASSWORD
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 QUERIES_DIR = BASE_DIR / "queries"
+EXPERIMENTAL_INDEXES_DIR = BASE_DIR / "experimental_indexes"
 
 
 def get_connection():
@@ -67,3 +68,56 @@ def load_query(filename):
         raise ValueError(f"SQL file {filename} is empty after stripping guards")
 
     return sql
+
+
+def get_experimental_index_files(tag):
+    """
+    Finds the V and U SQL files in experimental_indexes/ that match the given tag.
+    Returns (v_file_path, u_file_path) or (None, None) if not found.
+    """
+    if tag == "baseline" or not tag:
+        return None, None
+
+    v_files = list(EXPERIMENTAL_INDEXES_DIR.glob(f"V*__*{tag}*.sql"))
+    u_files = list(EXPERIMENTAL_INDEXES_DIR.glob(f"U*__*{tag}*.sql"))
+
+    v_file = v_files[0] if v_files else None
+    u_file = u_files[0] if u_files else None
+
+    return v_file, u_file
+
+
+def execute_ddl_script(filepath):
+    """
+    Executes a DDL configuration script (like CREATE INDEX or DROP INDEX).
+    """
+    if not filepath or not filepath.exists():
+        return
+
+    lines = []
+    with filepath.open("r", encoding="utf-8") as handle:
+        for raw_line in handle:
+            stripped = raw_line.strip()
+            if not stripped or stripped.startswith("--"):
+                continue
+            lines.append(stripped)
+
+    # Some DDL scripts have trailing semicolons, which Oracle's cursor.execute dislikes
+    sql = " ".join(lines)
+    if sql.endswith(";"):
+        sql = sql[:-1]
+
+    if not sql:
+        return
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(sql)
+        conn.commit()
+        print(f"[DB] Successfully executed {filepath.name}")
+    except Exception as e:
+        print(f"[!] Error executing {filepath.name}:\n{e}")
+        raise
+    finally:
+        conn.close()

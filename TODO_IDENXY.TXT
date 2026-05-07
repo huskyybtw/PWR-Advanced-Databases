@@ -1,0 +1,16 @@
+zrobic porownanie roznych typow indexow na danym indexie
+czy index na jedno pole jedno wiecej
+
+porownac jak zmienia sie query plan po dorzuceniu indexu
+porownac czasy 
+
+poakzac w edytorze tekstu fixed-size font
+
+automatyczna tabelka porownawcza
+
+pokazac avg running time bez indexow i z indexami
+pokazac avg cost bez indexow i z indexami
+pokazac wzrosty o ile i czy wzroslo czy spadlo
+
+moze wystapic sytuacja gdzie w ktorej indexy nie poprawily sytuacji
+moze sie zdarzyc ze indexy nie zmienia query planow wtedy uzywamy HINT'ow by wymusic indexy
