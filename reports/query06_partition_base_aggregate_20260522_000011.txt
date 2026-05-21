@@ -1,0 +1,47 @@
+=== AGGREGATE REPORT: query06 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 0.0270
+Min Duration (s): 0.0225
+Max Duration (s): 0.0313
+Variance Duration: 0.000019
+Avg Cost: 14610.00
+
+--- Individual Run Files ---
+- query06_dynamic_calendar_blocking_partition_base_run1_20260522_000011.txt
+- query06_dynamic_calendar_blocking_partition_base_run2_20260522_000011.txt
+- query06_dynamic_calendar_blocking_partition_base_run3_20260522_000011.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3030791405
+ 
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                  | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | UPDATE STATEMENT           |                             | 48360 |  1936K|       | 14610   (2)| 00:00:01 |       |       |
+|   1 |  UPDATE                    | CALENDAR                    |       |       |       |            |          |       |       |
+|*  2 |   HASH JOIN RIGHT SEMI     |                             | 48360 |  1936K|       | 14610   (2)| 00:00:01 |       |       |
+|   3 |    VIEW                    | VW_NSO_1                    | 21991 |   279K|       |  7920   (3)| 00:00:01 |       |       |
+|*  4 |     FILTER                 |                             |       |       |       |            |          |       |       |
+|*  5 |      HASH JOIN ANTI        |                             | 21991 |   665K|  3344K|  7920   (3)| 00:00:01 |       |       |
+|   6 |       PARTITION RANGE ALL  |                             |   122K|  1908K|       |  1094   (1)| 00:00:01 |     1 |1048575|
+|*  7 |        TABLE ACCESS FULL   | LISTING_SCRAPE_SNAPSHOT     |   122K|  1908K|       |  1094   (1)| 00:00:01 |     1 |1048575|
+|*  8 |       INDEX FAST FULL SCAN | IDX_REVIEWS_LISTING_DATE_V5 |   169K|  2486K|       |  6446   (3)| 00:00:01 |       |       |
+|   9 |    PARTITION RANGE ITERATOR|                             |   122K|  3338K|       |  6690   (2)| 00:00:01 |   KEY |   KEY |
+|* 10 |     TABLE ACCESS FULL      | CALENDAR                    |   122K|  3338K|       |  6690   (2)| 00:00:01 |   KEY |   KEY |
+----------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   4 - filter(CURRENT_DATE+30>=CURRENT_DATE)
+   5 - access("R"."LISTING_ID"="SNAP"."LISTING_ID")
+   7 - filter("SNAP"."PRICE"<2.0E+001D)
+   8 - filter("R"."date">=CURRENT_DATE-365)
+  10 - filter("C"."date">=CURRENT_DATE AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(CURRENT_DATE) AND 
+              "C"."date"<=CURRENT_DATE+30 AND TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(CURRENT_DATE+30))
+ 
+Note
+-----
+   - this is an adaptive plan

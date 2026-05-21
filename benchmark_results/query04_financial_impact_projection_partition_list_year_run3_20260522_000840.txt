@@ -1,0 +1,67 @@
+Query Name: query04_financial_impact_projection
+Tag: partition_list_year
+Run Index: 3
+SQL File: query04_financial_impact_projection.sql
+Statement Type: SELECT
+Started At: 2026-05-22T00:08:53.086747
+Execution Duration (s): 0.2979
+Fetch Duration (s): 0.0031
+Total Duration (s): 0.3010
+Rows Impacted: 330
+-- SQL --
+SELECT
+    n.neighbourhood,
+    COUNT(l.listing_id) AS premium_properties_count,
+    ROUND(AVG(snap.price), 2) AS current_avg_price,
+    ROUND(AVG(snap.price * 1.15), 2) AS projected_avg_price,
+    SUM(snap.price * 30) AS current_max_monthly_revenue,
+    SUM((snap.price * 1.15) * 30) AS projected_max_monthly_revenue,
+    SUM((snap.price * 0.15) * 30) AS neighbourhood_monthly_profit_gain
+FROM listings l
+JOIN neighbourhoods n ON l.neighbourhood_id = n.neighbourhood_id
+JOIN listing_scrape_snapshot snap ON l.listing_id = snap.listing_id
+WHERE l.room_type = 'Entire home/apt'
+  AND l.listing_id IN (
+      SELECT r.listing_id
+      FROM reviews r
+      WHERE r."date" >= CURRENT_DATE - 365
+      GROUP BY r.listing_id
+      HAVING COUNT(r.review_id) > 20
+  )
+GROUP BY n.neighbourhood
+ORDER BY neighbourhood_monthly_profit_gain DESC
+-- Estimated Execution Plan --
+Plan hash value: 678964540
+ 
+-------------------------------------------------------------------------------------------------------------
+| Id  | Operation                        | Name                     | Rows  | Bytes | Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                 |                          |  2436 |   168K|  9429   (3)| 00:00:01 |
+|   1 |  SORT ORDER BY                   |                          |  2436 |   168K|  9429   (3)| 00:00:01 |
+|   2 |   HASH GROUP BY                  |                          |  2436 |   168K|  9429   (3)| 00:00:01 |
+|*  3 |    HASH JOIN                     |                          |  6841 |   474K|  9426   (2)| 00:00:01 |
+|*  4 |     HASH JOIN                    |                          |  3413 |   183K|  9016   (3)| 00:00:01 |
+|   5 |      TABLE ACCESS FULL           | NEIGHBOURHOODS           |  4781 | 90839 |     9   (0)| 00:00:01 |
+|   6 |      NESTED LOOPS                |                          |  3413 |   119K|  9007   (3)| 00:00:01 |
+|   7 |       NESTED LOOPS               |                          |  3413 |   119K|  9007   (3)| 00:00:01 |
+|   8 |        VIEW                      | VW_NSO_1                 |  3413 | 23891 |  5592   (4)| 00:00:01 |
+|*  9 |         HASH GROUP BY            |                          |  3413 | 51195 |  5592   (4)| 00:00:01 |
+|* 10 |          INDEX FAST FULL SCAN    | IDX_REVIEWS_LISTING_DATE |   423K|  6203K|  5581   (4)| 00:00:01 |
+|* 11 |        INDEX UNIQUE SCAN         | LISTINGS_PK              |     1 |       |     0   (0)| 00:00:01 |
+|* 12 |       TABLE ACCESS BY INDEX ROWID| LISTINGS                 |     1 |    29 |     1   (0)| 00:00:01 |
+|  13 |     TABLE ACCESS FULL            | LISTING_SCRAPE_SNAPSHOT  |   164K|  2570K|   410   (1)| 00:00:01 |
+-------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("L"."LISTING_ID"="SNAP"."LISTING_ID")
+   4 - access("L"."NEIGHBOURHOOD_ID"="N"."NEIGHBOURHOOD_ID")
+   9 - filter(COUNT(*)>20)
+  10 - filter("R"."date">=CURRENT_DATE-365)
+  11 - access("L"."LISTING_ID"="LISTING_ID")
+  12 - filter("L"."ROOM_TYPE"='Entire home/apt')
+ 
+Note
+-----
+   - this is an adaptive plan

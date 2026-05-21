@@ -1,0 +1,72 @@
+=== AGGREGATE REPORT: query03 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 1.5525
+Min Duration (s): 1.4507
+Max Duration (s): 1.7519
+Variance Duration: 0.029815
+Avg Cost: 45072.00
+
+--- Individual Run Files ---
+- query03_potential_monthly_revenue_partition_base_run1_20260522_000011.txt
+- query03_potential_monthly_revenue_partition_base_run2_20260522_000011.txt
+- query03_potential_monthly_revenue_partition_base_run3_20260522_000011.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 346146240
+ 
+------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                             |   121 | 11132 |       | 45072   (2)| 00:00:02 |       |       |
+|   1 |  TEMP TABLE TRANSFORMATION               |                             |       |       |       |            |          |       |       |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D662A_976B53   |       |       |       |            |          |       |       |
+|   3 |    HASH GROUP BY                         |                             | 49508 |  1740K|  2968K| 17573   (2)| 00:00:01 |       |       |
+|*  4 |     HASH JOIN                            |                             | 68352 |  2403K|  2136K| 17038   (2)| 00:00:01 |       |       |
+|   5 |      VIEW                                | VW_GBF_8                    | 68352 |  1335K|       | 13255   (2)| 00:00:01 |       |       |
+|   6 |       HASH GROUP BY                      |                             | 68352 |   467K|    85M| 13255   (2)| 00:00:01 |       |       |
+|   7 |        INDEX FAST FULL SCAN              | IDX_REVIEWS_LISTING_DATE_V5 |  5571K|    37M|       |  6295   (1)| 00:00:01 |       |       |
+|   8 |      TABLE ACCESS FULL                   | LISTINGS                    | 83208 |  1300K|       |  3568   (1)| 00:00:01 |       |       |
+|   9 |   WINDOW SORT                            |                             |   121 | 11132 |       | 27499   (2)| 00:00:02 |       |       |
+|* 10 |    HASH JOIN                             |                             |   121 | 11132 |       | 27432   (2)| 00:00:02 |       |       |
+|  11 |     JOIN FILTER CREATE                   | :BF0000                     |   122 |  9638 |       |  3762   (1)| 00:00:01 |       |       |
+|* 12 |      HASH JOIN                           |                             |   122 |  9638 |       |  3762   (1)| 00:00:01 |       |       |
+|  13 |       NESTED LOOPS                       |                             |   124 |  7316 |       |  3695   (1)| 00:00:01 |       |       |
+|  14 |        NESTED LOOPS                      |                             |   124 |  7316 |       |  3695   (1)| 00:00:01 |       |       |
+|  15 |         VIEW                             |                             |   124 |  4092 |       |  3571   (1)| 00:00:01 |       |       |
+|* 16 |          FILTER                          |                             |       |       |       |            |          |       |       |
+|  17 |           HASH GROUP BY                  |                             |   124 |  2480 |       |  3571   (1)| 00:00:01 |       |       |
+|  18 |            TABLE ACCESS FULL             | LISTINGS                    | 83208 |  1625K|       |  3568   (1)| 00:00:01 |       |       |
+|* 19 |         INDEX UNIQUE SCAN                | HOSTS_PK                    |     1 |       |       |     0   (0)| 00:00:01 |       |       |
+|  20 |        TABLE ACCESS BY INDEX ROWID       | HOSTS                       |     1 |    26 |       |     1   (0)| 00:00:01 |       |       |
+|* 21 |       VIEW                               |                             | 49508 |   966K|       |    67   (0)| 00:00:01 |       |       |
+|  22 |        TABLE ACCESS FULL                 | SYS_TEMP_0FD9D662A_976B53   | 49508 |   966K|       |    67   (0)| 00:00:01 |       |       |
+|  23 |        SORT AGGREGATE                    |                             |     1 |    13 |       |            |          |       |       |
+|  24 |         VIEW                             |                             | 49508 |   628K|       |    67   (0)| 00:00:01 |       |       |
+|  25 |          TABLE ACCESS FULL               | SYS_TEMP_0FD9D662A_976B53   | 49508 |   966K|       |    67   (0)| 00:00:01 |       |       |
+|  26 |     VIEW                                 |                             | 49508 |   628K|       | 23670   (2)| 00:00:01 |       |       |
+|  27 |      HASH GROUP BY                       |                             | 49508 |  2127K|  3336K| 23670   (2)| 00:00:01 |       |       |
+|  28 |       JOIN FILTER USE                    | :BF0000                     | 65272 |  2804K|       | 23053   (3)| 00:00:01 |       |       |
+|* 29 |        HASH JOIN                         |                             | 65272 |  2804K|  2280K| 23053   (3)| 00:00:01 |       |       |
+|  30 |         TABLE ACCESS FULL                | LISTINGS                    | 83208 |  1300K|       |  3568   (1)| 00:00:01 |       |       |
+|  31 |         VIEW                             | VW_GBC_14                   | 65272 |  1784K|       | 19250   (3)| 00:00:01 |       |       |
+|  32 |          HASH GROUP BY                   |                             | 65272 |  2103K|   173M| 19250   (3)| 00:00:01 |       |       |
+|  33 |           PARTITION RANGE SINGLE         |                             |  3785K|   119M|       |  6965   (6)| 00:00:01 |    73 |    73 |
+|* 34 |            TABLE ACCESS FULL             | CALENDAR                    |  3785K|   119M|       |  6965   (6)| 00:00:01 |    73 |    73 |
+------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   4 - access("ITEM_1"="L"."LISTING_ID")
+  10 - access("HPS"."HOST_ID"="H"."HOST_ID")
+  12 - access("HRS"."HOST_ID"="H"."HOST_ID")
+  16 - filter(COUNT(DISTINCT "L"."LISTING_ID")>=3 AND COUNT(DISTINCT "L"."NEIGHBOURHOOD_ID")>=2)
+  19 - access("HLS"."HOST_ID"="H"."HOST_ID")
+  21 - filter("HRS"."TOTAL_REVIEWS"> (SELECT SUM("TOTAL_REVIEWS")/COUNT("TOTAL_REVIEWS") FROM  (SELECT /*+ CACHE ("T1") */ "C0" 
+              "HOST_ID","C1" "TOTAL_REVIEWS" FROM "SYS"."SYS_TEMP_0FD9D662A_976B53" "T1") "HOST_REVIEW_STATS"))
+  29 - access("ITEM_1"="L"."LISTING_ID")
+  34 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND 
+              TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND "C"."date"<TO_DATE(' 2026-01-01 
+              00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd 
+              hh24:mi:ss')))

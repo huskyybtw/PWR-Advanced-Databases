@@ -14,6 +14,7 @@ services:
     volumes:
       - oracle-xe-data:/opt/oracle/oradata
       - ./init_scripts:/opt/oracle/scripts/startup
+      - ./external_archive_disk:/opt/oracle/external_disk
     healthcheck:
       test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -s system/$${ORACLE_PWD}@localhost:1521/XEPDB1 || exit 1"]
       interval: 30s

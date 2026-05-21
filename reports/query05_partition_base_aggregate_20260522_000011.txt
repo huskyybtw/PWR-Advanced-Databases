@@ -1,0 +1,52 @@
+=== AGGREGATE REPORT: query05 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 2.5470
+Min Duration (s): 2.5121
+Max Duration (s): 2.5791
+Variance Duration: 0.001128
+Avg Cost: 45047.00
+
+--- Individual Run Files ---
+- query05_massive_snapshot_generation_partition_base_run1_20260522_000011.txt
+- query05_massive_snapshot_generation_partition_base_run2_20260522_000011.txt
+- query05_massive_snapshot_generation_partition_base_run3_20260522_000011.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3680697986
+ 
+---------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                       | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+---------------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                |                             | 65272 |  6756K|       | 45047   (2)| 00:00:02 |       |       |
+|   1 |  LOAD TABLE CONVENTIONAL        | LISTING_SCRAPE_SNAPSHOT     |       |       |       |            |          |       |       |
+|   2 |   WINDOW SORT                   |                             | 65272 |  6756K|  8304K| 45047   (2)| 00:00:02 |       |       |
+|*  3 |    VIEW                         |                             | 65272 |  6756K|       | 43477   (2)| 00:00:02 |       |       |
+|*  4 |     WINDOW SORT PUSHED RANK     |                             | 65272 |  6565K|  7264K| 43477   (2)| 00:00:02 |       |       |
+|*  5 |      HASH JOIN                  |                             | 65272 |  6565K|       | 41945   (2)| 00:00:02 |       |       |
+|   6 |       TABLE ACCESS FULL         | NEIGHBOURHOODS              |  4781 | 33467 |       |     9   (0)| 00:00:01 |       |       |
+|*  7 |       HASH JOIN RIGHT OUTER     |                             | 65272 |  6119K|  3608K| 41936   (2)| 00:00:02 |       |       |
+|   8 |        VIEW                     |                             | 68352 |  2803K|       | 16658   (2)| 00:00:01 |       |       |
+|   9 |         SORT GROUP BY           |                             | 68352 |  1001K|   128M| 16658   (2)| 00:00:01 |       |       |
+|  10 |          INDEX FAST FULL SCAN   | IDX_REVIEWS_LISTING_DATE_V5 |  5571K|    79M|       |  6295   (1)| 00:00:01 |       |       |
+|* 11 |        HASH JOIN                |                             | 65272 |  3442K|  2032K| 24897   (2)| 00:00:01 |       |       |
+|  12 |         TABLE ACCESS FULL       | LISTINGS                    | 83208 |  1056K|       |  3568   (1)| 00:00:01 |       |       |
+|  13 |         VIEW                    |                             | 65272 |  2613K|       | 21066   (3)| 00:00:01 |       |       |
+|  14 |          SORT GROUP BY          |                             | 65272 |  2549K|   203M| 21066   (3)| 00:00:01 |       |       |
+|  15 |           PARTITION RANGE SINGLE|                             |  3785K|   144M|       |  6967   (6)| 00:00:01 |    73 |    73 |
+|* 16 |            TABLE ACCESS FULL    | CALENDAR                    |  3785K|   144M|       |  6967   (6)| 00:00:01 |    73 |    73 |
+---------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - filter("RNK"<=20)
+   4 - filter(DENSE_RANK() OVER ( PARTITION BY "N"."LOCATION_ID" ORDER BY NVL("REV"."REVIEWS_CNT",0) DESC 
+              ,INTERNAL_FUNCTION("CAL"."AVG_PRICE") DESC )<=20)
+   5 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+   7 - access("REV"."LISTING_ID"(+)="L"."LISTING_ID")
+  11 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
+  16 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND 
+              TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 
+              'syyyy-mm-dd hh24:mi:ss')))

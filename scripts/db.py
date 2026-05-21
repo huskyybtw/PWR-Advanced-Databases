@@ -102,18 +102,20 @@ def execute_ddl_script(filepath):
                 continue
             lines.append(stripped)
 
-    # Some DDL scripts have trailing semicolons, which Oracle's cursor.execute dislikes
-    sql = " ".join(lines)
-    if sql.endswith(";"):
-        sql = sql[:-1]
+    sql_text = "\n".join(lines).strip()
+    if sql_text.endswith(";"):
+        sql_text = sql_text[:-1]
 
-    if not sql:
+    if not sql_text:
         return
+
+    statements = [statement.strip() for statement in sql_text.split(";") if statement.strip()]
 
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(sql)
+            for statement in statements:
+                cursor.execute(statement)
         conn.commit()
         print(f"[DB] Successfully executed {filepath.name}")
     except Exception as e:

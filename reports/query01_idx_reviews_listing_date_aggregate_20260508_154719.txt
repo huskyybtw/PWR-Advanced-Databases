@@ -1,0 +1,76 @@
+=== AGGREGATE REPORT: query01 ===
+Tag: idx_reviews_listing_date
+Populations: 3
+Avg Total Duration (s): 0.8919
+Min Duration (s): 0.7466
+Max Duration (s): 1.1607
+Variance Duration: 0.054321
+Avg Cost: 32564.00
+
+--- Individual Run Files ---
+- query01_historical_price_fluctuation_idx_reviews_listing_date_run1_20260508_154719.txt
+- query01_historical_price_fluctuation_idx_reviews_listing_date_run2_20260508_154719.txt
+- query01_historical_price_fluctuation_idx_reviews_listing_date_run3_20260508_154719.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 1201725436
+ 
+------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           | 26008 |  4546K|       | 32564   (1)| 00:00:02 |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D660A_87F1ED |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |                           | 65272 |  1784K|   144M| 17373   (1)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL                    | CALENDAR                  |  3785K|   101M|       |  6643   (1)| 00:00:01 |
+|   5 |   SORT ORDER BY                          |                           | 26008 |  4546K|  4968K| 15191   (1)| 00:00:01 |
+|*  6 |    FILTER                                |                           |       |       |       |            |          |
+|*  7 |     HASH JOIN OUTER                      |                           | 26008 |  4546K|       | 14169   (1)| 00:00:01 |
+|   8 |      JOIN FILTER CREATE                  | :BF0000                   |  3264 |   459K|       |  8635   (1)| 00:00:01 |
+|*  9 |       HASH JOIN                          |                           |  3264 |   459K|       |  8635   (1)| 00:00:01 |
+|* 10 |        HASH JOIN                         |                           |  3264 |   411K|       |  7884   (1)| 00:00:01 |
+|  11 |         VIEW                             |                           |    39 |   351 |       |  3833   (1)| 00:00:01 |
+|  12 |          HASH GROUP BY                   |                           |    39 |  1365 |       |  3833   (1)| 00:00:01 |
+|* 13 |           HASH JOIN                      |                           | 65272 |  2230K|       |  3831   (1)| 00:00:01 |
+|  14 |            TABLE ACCESS FULL             | NEIGHBOURHOODS            |  4781 | 33467 |       |     9   (0)| 00:00:01 |
+|* 15 |            HASH JOIN                     |                           | 65272 |  1784K|  1728K|  3821   (1)| 00:00:01 |
+|  16 |             VIEW                         |                           | 65272 |   956K|       |    69   (0)| 00:00:01 |
+|  17 |              TABLE ACCESS FULL           | SYS_TEMP_0FD9D660A_87F1ED | 65272 |  1784K|       |    69   (0)| 00:00:01 |
+|  18 |             TABLE ACCESS FULL            | LISTINGS                  | 83208 |  1056K|       |  3568   (1)| 00:00:01 |
+|* 19 |         HASH JOIN                        |                           | 65272 |  7649K|       |  4051   (1)| 00:00:01 |
+|  20 |          TABLE ACCESS FULL               | LOCATIONS                 |    42 |   504 |       |     3   (0)| 00:00:01 |
+|* 21 |          HASH JOIN                       |                           | 65272 |  6884K|       |  4048   (1)| 00:00:01 |
+|  22 |           TABLE ACCESS FULL              | NEIGHBOURHOODS            |  4781 |   102K|       |     9   (0)| 00:00:01 |
+|* 23 |           HASH JOIN                      |                           | 65272 |  5481K|  2552K|  4038   (1)| 00:00:01 |
+|* 24 |            VIEW                          |                           | 65272 |  1784K|       |    69   (0)| 00:00:01 |
+|  25 |             TABLE ACCESS FULL            | SYS_TEMP_0FD9D660A_87F1ED | 65272 |  1784K|       |    69   (0)| 00:00:01 |
+|  26 |            TABLE ACCESS FULL             | LISTINGS                  | 83208 |  4712K|       |  3568   (1)| 00:00:01 |
+|  27 |        TABLE ACCESS FULL                 | HOSTS                     | 50175 |   734K|       |   751   (1)| 00:00:01 |
+|  28 |      VIEW                                |                           |   663K|    22M|       |  5532   (1)| 00:00:01 |
+|  29 |       HASH GROUP BY                      |                           |   663K|    13M|       |  5532   (1)| 00:00:01 |
+|  30 |        JOIN FILTER USE                   | :BF0000                   |   663K|    13M|       |  5516   (1)| 00:00:01 |
+|* 31 |         INDEX FAST FULL SCAN             | IDX_REVIEWS_LISTING_DATE  |   663K|    13M|       |  5516   (1)| 00:00:01 |
+------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   4 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   6 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
+   7 - access("RS"."LISTING_ID"(+)="L"."LISTING_ID")
+   9 - access("H"."HOST_ID"="L"."HOST_ID")
+  10 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
+       filter("CS"."AVG_PRICE_DEC">"CPA"."CITY_AVG_PRICE")
+  13 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  15 - access("L"."LISTING_ID"="CS"."LISTING_ID")
+  19 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
+  21 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  23 - access("CS"."LISTING_ID"="L"."LISTING_ID")
+  24 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
+  31 - filter("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+   - this is an adaptive plan

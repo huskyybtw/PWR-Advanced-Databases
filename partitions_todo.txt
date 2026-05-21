@@ -1,0 +1,10 @@
+declaration of partitions based on query plans
+
+no implementation
+
+diffrent type of partitions atleast 3 diffrent, pointing to operation that is planning to be improved (in queryplans)
+
+comparisons diffrent scope of fields/type of partition/ MAX 2
+
+distribution storing partiions on external device - OPTIONAL
+
