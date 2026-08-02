@@ -1,0 +1,320 @@
+
+===================================================================================================================
+                                                 COMPARISON REPORT                                                 
+===================================================================================================================
+Query      | Metric          | inmemory        | inmemory_capacity_high | Diff (%)   | Status          | Plan Changed
+-------------------------------------------------------------------------------------------------------------------
+query01    | Duration (Avg)  | 1.0357          | 0.8966          | -13.43     | IMPROVED        | NO          
+           | Duration (Min)  | 1.0357          | 0.8966          | -          | -               |             
+           | Duration (Max)  | 1.0357          | 0.8966          | -          | -               |             
+           | Cost            | 6738000000.00   | 6738000000.00   | 0.00       | SAME            |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (6458)     | SAME (6458)     | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+query02    | Duration (Avg)  | 0.7953          | 0.7400          | -6.95      | IMPROVED        | YES         
+           | Duration (Min)  | 0.7953          | 0.7400          | -          | -               |             
+           | Duration (Max)  | 0.7953          | 0.7400          | -          | -               |             
+           | Cost            | 246000.00       | 254000.00       | 3.25       | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (279)      | SAME (279)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query02 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -3,13 +3,13 @@
+ -------------------------------------------------------------------------------------------------------------
+ | Id  | Operation                                | Name     | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+ -------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT                         |          |  2911 |   540K|       |   246K  (1)| 00:00:10 |
+-|   1 |  SORT ORDER BY                           |          |  2911 |   540K|   830M|   246K  (1)| 00:00:10 |
++|   0 | SELECT STATEMENT                         |          |  2911 |   540K|       |   254K  (1)| 00:00:10 |
++|   1 |  SORT ORDER BY                           |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
+ |*  2 |   FILTER                                 |          |       |       |       |            |          |
+-|   3 |    HASH GROUP BY                         |          |  2911 |   540K|   830M|   246K  (1)| 00:00:10 |
+-|   4 |     VIEW                                 | VW_DAG_1 |  4145K|   751M|       |   125K  (1)| 00:00:05 |
+-|   5 |      HASH GROUP BY                       |          |  4145K|  1569M|       |   125K  (1)| 00:00:05 |
+-|*  6 |       HASH JOIN OUTER                    |          |  4145K|  1569M|  5880K|   125K  (1)| 00:00:05 |
++|   3 |    HASH GROUP BY                         |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
++|   4 |     VIEW                                 | VW_DAG_1 |  4145K|   751M|       |   133K  (1)| 00:00:06 |
++|   5 |      HASH GROUP BY                       |          |  4145K|  1569M|       |   133K  (1)| 00:00:06 |
++|*  6 |       HASH JOIN OUTER                    |          |  4145K|  1569M|  5880K|   133K  (1)| 00:00:06 |
+ |   7 |        JOIN FILTER CREATE                | :BF0000  | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+ |*  8 |         HASH JOIN                        |          | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+ |*  9 |          TABLE ACCESS INMEMORY FULL      | LISTINGS | 16081 |   816K|       |  3568   (1)| 00:00:01 |
+@@ -21,8 +21,8 @@
+ |  15 |               HASH GROUP BY              |          | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
+ |* 16 |                TABLE ACCESS INMEMORY FULL| LISTINGS | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
+ |* 17 |           TABLE ACCESS FULL              | HOSTS    | 15750 |  4568K|       |   819   (1)| 00:00:01 |
+-|  18 |        JOIN FILTER USE                   | :BF0000  |  4130K|   137M|       |   107K  (1)| 00:00:05 |
+-|* 19 |         TABLE ACCESS INMEMORY FULL       | REVIEWS  |  4130K|   137M|       |   107K  (1)| 00:00:05 |
++|  18 |        JOIN FILTER USE                   | :BF0000  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
++|* 19 |         TABLE ACCESS INMEMORY FULL       | REVIEWS  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
+ -------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+-------------------------------------------------------------------------------------------------------------------
+query03    | Duration (Avg)  | 0.8703          | 1.4605          | 67.82      | DEGRADED        | YES         
+           | Duration (Min)  | 0.8703          | 1.4605          | -          | -               |             
+           | Duration (Max)  | 0.8703          | 1.4605          | -          | -               |             
+           | Cost            | 137000.00       | 181000.00       | 32.12      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (873)      | SAME (873)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query03 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -3,38 +3,38 @@
+ ------------------------------------------------------------------------------------------------------------------------------
+ | Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+ ------------------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT                         |                           |   181M|    41G|       |   137K  (1)| 00:00:06 |
++|   0 | SELECT STATEMENT                         |                           |   181M|    41G|       |   181K  (1)| 00:00:08 |
+ |   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+ |   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_XXX |       |       |       |            |          |
+-|   3 |    HASH GROUP BY                         |                           |  4130K|   204M|       | 82729   (1)| 00:00:04 |
+-|   4 |     MERGE JOIN                           |                           |  4130K|   204M|       | 82617   (1)| 00:00:04 |
+-|   5 |      SORT JOIN                           |                           |  4130K|   102M|       | 82004   (1)| 00:00:04 |
+-|   6 |       VIEW                               | VW_GBF_8                  |  4130K|   102M|       | 82004   (1)| 00:00:04 |
+-|   7 |        HASH GROUP BY                     |                           |  4130K|    51M|       | 82004   (1)| 00:00:04 |
+-|   8 |         TABLE ACCESS INMEMORY FULL       | REVIEWS                   |  4130K|    51M|       | 81927   (1)| 00:00:04 |
+-|*  9 |      SORT JOIN                           |                           | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
+-|  10 |       TABLE ACCESS INMEMORY FULL         | LISTINGS                  | 63488 |  1612K|       |   140   (6)| 00:00:01 |
+-|  11 |   WINDOW SORT                            |                           |   181M|    41G|       | 55146   (2)| 00:00:03 |
+-|  12 |    MERGE JOIN                            |                           |   181M|    41G|       | 47231   (2)| 00:00:02 |
+-|  13 |     MERGE JOIN                           |                           |  2551K|   540M|       |  8305   (3)| 00:00:01 |
+-|  14 |      MERGE JOIN                          |                           |  2339K|   408M|       |  7522   (3)| 00:00:01 |
+-|  15 |       SORT JOIN                          |                           |  2339K|    42M|       |  4597   (4)| 00:00:01 |
+-|  16 |        VIEW                              |                           |  2339K|    42M|       |  4597   (4)| 00:00:01 |
+-|  17 |         HASH GROUP BY                    |                           |  2339K|   129M|       |  4597   (4)| 00:00:01 |
+-|  18 |          MERGE JOIN                      |                           |  2339K|   129M|       |  4536   (3)| 00:00:01 |
++|   3 |    HASH GROUP BY                         |                           |  4130K|   204M|       |   119K  (1)| 00:00:05 |
++|   4 |     MERGE JOIN                           |                           |  4130K|   204M|       |   119K  (1)| 00:00:05 |
++|   5 |      SORT JOIN                           |                           |  4130K|   102M|       |   115K  (1)| 00:00:05 |
++|   6 |       VIEW                               | VW_GBF_8                  |  4130K|   102M|       |   115K  (1)| 00:00:05 |
++|   7 |        HASH GROUP BY                     |                           |  4130K|    51M|       |   115K  (1)| 00:00:05 |
++|   8 |         TABLE ACCESS INMEMORY FULL       | REVIEWS                   |  4130K|    51M|       |   115K  (1)| 00:00:05 |
++|*  9 |      SORT JOIN                           |                           | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
++|  10 |       TABLE ACCESS INMEMORY FULL         | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
++|  11 |   WINDOW SORT                            |                           |   181M|    41G|       | 62000   (2)| 00:00:03 |
++|  12 |    MERGE JOIN                            |                           |   181M|    41G|       | 54084   (2)| 00:00:03 |
++|  13 |     MERGE JOIN                           |                           |  2551K|   540M|       | 15158   (2)| 00:00:01 |
++|  14 |      MERGE JOIN                          |                           |  2339K|   408M|       | 10949   (2)| 00:00:01 |
++|  15 |       SORT JOIN                          |                           |  2339K|    42M|       |  8025   (2)| 00:00:01 |
++|  16 |        VIEW                              |                           |  2339K|    42M|       |  8025   (2)| 00:00:01 |
++|  17 |         HASH GROUP BY                    |                           |  2339K|   129M|       |  8025   (2)| 00:00:01 |
++|  18 |          MERGE JOIN                      |                           |  2339K|   129M|       |  7963   (2)| 00:00:01 |
+ |  19 |           SORT JOIN                      |                           |  2339K|    71M|       |  3923   (3)| 00:00:01 |
+ |  20 |            VIEW                          | VW_GBC_14                 |  2339K|    71M|       |  3923   (3)| 00:00:01 |
+ |  21 |             HASH GROUP BY                |                           |  2339K|    62M|       |  3923   (3)| 00:00:01 |
+ |* 22 |              TABLE ACCESS INMEMORY FULL  | CALENDAR                  |  2339K|    62M|       |  3862   (1)| 00:00:01 |
+-|* 23 |           SORT JOIN                      |                           | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
+-|  24 |            TABLE ACCESS INMEMORY FULL    | LISTINGS                  | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++|* 23 |           SORT JOIN                      |                           | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
++|  24 |            TABLE ACCESS INMEMORY FULL    | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
+ |* 25 |       SORT JOIN                          |                           | 58214 |  9323K|    19M|  2924   (1)| 00:00:01 |
+ |  26 |        TABLE ACCESS FULL                 | HOSTS                     | 58214 |  9323K|       |   819   (1)| 00:00:01 |
+-|* 27 |      SORT JOIN                           |                           | 63488 |  2418K|  6488K|   783   (2)| 00:00:01 |
+-|  28 |       VIEW                               |                           | 63488 |  2418K|       |   144   (9)| 00:00:01 |
++|* 27 |      SORT JOIN                           |                           | 63488 |  2418K|  6488K|  4209   (1)| 00:00:01 |
++|  28 |       VIEW                               |                           | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+ |* 29 |        FILTER                            |                           |       |       |       |            |          |
+-|  30 |         HASH GROUP BY                    |                           | 63488 |  2418K|       |   144   (9)| 00:00:01 |
+-|  31 |          TABLE ACCESS INMEMORY FULL      | LISTINGS                  | 63488 |  2418K|       |   143   (8)| 00:00:01 |
++|  30 |         HASH GROUP BY                    |                           | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
++|  31 |          TABLE ACCESS INMEMORY FULL      | LISTINGS                  | 63488 |  2418K|       |  3568   (1)| 00:00:01 |
+ |* 32 |     SORT JOIN                            |                           |  4130K|   102M|   285M| 38446   (1)| 00:00:02 |
+ |* 33 |      VIEW                                |                           |  4130K|   102M|       |  7916   (1)| 00:00:01 |
+ |  34 |       TABLE ACCESS FULL                  | SYS_TEMP_XXX |  4130K|   102M|       |  7916   (1)| 00:00:01 |
+-------------------------------------------------------------------------------------------------------------------
+query04    | Duration (Avg)  | 0.4941          | 0.5548          | 12.28      | DEGRADED        | YES         
+           | Duration (Min)  | 0.4941          | 0.5548          | -          | -               |             
+           | Duration (Max)  | 0.4941          | 0.5548          | -          | -               |             
+           | Cost            | 83430.00        | 100000.00       | 19.86      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (335)      | SAME (335)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query04 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -3,18 +3,18 @@
+ ---------------------------------------------------------------------------------------------------------------------
+ | Id  | Operation                         | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+ ---------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT                  |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
+-|   1 |  SORT ORDER BY                    |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
+-|   2 |   HASH GROUP BY                   |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
+-|*  3 |    HASH JOIN                      |                         | 49705 |    15M|       | 83426   (1)| 00:00:04 |
++|   0 | SELECT STATEMENT                  |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
++|   1 |  SORT ORDER BY                    |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
++|   2 |   HASH GROUP BY                   |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
++|*  3 |    HASH JOIN                      |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+ |   4 |     TABLE ACCESS FULL             | NEIGHBOURHOODS          |  2497 |   346K|       |     5   (0)| 00:00:01 |
+-|*  5 |     HASH JOIN                     |                         | 49705 |  9076K|  1752K| 83421   (1)| 00:00:04 |
+-|   6 |      TABLE ACCESS INMEMORY FULL   | LISTING_SCRAPE_SNAPSHOT | 57786 |  1072K|       |   204   (0)| 00:00:01 |
+-|*  7 |      HASH JOIN RIGHT SEMI         |                         | 49704 |  8154K|  2808K| 82707   (1)| 00:00:04 |
+-|   8 |       VIEW                        | VW_NSO_1                |   114K|  1458K|       | 82033   (1)| 00:00:04 |
+-|*  9 |        HASH GROUP BY              |                         |   114K|  2468K|       | 82033   (1)| 00:00:04 |
+-|* 10 |         TABLE ACCESS INMEMORY FULL| REVIEWS                 |   114K|  2468K|       | 82031   (1)| 00:00:04 |
+-|* 11 |       TABLE ACCESS INMEMORY FULL  | LISTINGS                | 49704 |  7523K|       |   144   (9)| 00:00:01 |
++|*  5 |     HASH JOIN                     |                         | 46122 |  8422K|  1752K|   100K  (1)| 00:00:04 |
++|   6 |      TABLE ACCESS INMEMORY FULL   | LISTING_SCRAPE_SNAPSHOT | 57786 |  1072K|       |     9  (12)| 00:00:01 |
++|*  7 |      HASH JOIN RIGHT SEMI         |                         | 46121 |  7566K|  1984K| 99572   (1)| 00:00:04 |
++|   8 |       VIEW                        | VW_NSO_1                | 81114 |  1029K|       | 95514   (1)| 00:00:04 |
++|*  9 |        HASH GROUP BY              |                         | 81114 |  1742K|       | 95514   (1)| 00:00:04 |
++|* 10 |         TABLE ACCESS INMEMORY FULL| REVIEWS                 | 81114 |  1742K|       | 95512   (1)| 00:00:04 |
++|* 11 |       TABLE ACCESS INMEMORY FULL  | LISTINGS                | 49704 |  7523K|       |  3568   (1)| 00:00:01 |
+ ---------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+-------------------------------------------------------------------------------------------------------------------
+query05    | Duration (Avg)  | 1.7206          | 1.2683          | -26.29     | IMPROVED        | YES         
+           | Duration (Min)  | 1.7206          | 1.2683          | -          | -               |             
+           | Duration (Max)  | 1.7206          | 1.2683          | -          | -               |             
+           | Cost            | 8653000.00      | 8650000.00      | -0.03      | SAME            |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (656)      | SAME (656)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query05 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -3,24 +3,24 @@
+ ------------------------------------------------------------------------------------------------------------------------
+ | Id  | Operation                            | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+ ------------------------------------------------------------------------------------------------------------------------
+-|   0 | INSERT STATEMENT                     |                         |   152M|    15G|       |  8653K  (1)| 00:05:39 |
++|   0 | INSERT STATEMENT                     |                         |   152M|    15G|       |  8650K  (1)| 00:05:38 |
+ |   1 |  LOAD TABLE CONVENTIONAL             | LISTING_SCRAPE_SNAPSHOT |       |       |       |            |          |
+-|   2 |   WINDOW SORT                        |                         |   152M|    15G|    18G|  8653K  (1)| 00:05:39 |
+-|*  3 |    VIEW                              |                         |   152M|    15G|       |  4998K  (1)| 00:03:16 |
+-|*  4 |     WINDOW SORT PUSHED RANK          |                         |   152M|    20G|    22G|  4998K  (1)| 00:03:16 |
+-|*  5 |      HASH JOIN                       |                         |   152M|    20G|       |   108K  (2)| 00:00:05 |
++|   2 |   WINDOW SORT                        |                         |   152M|    15G|    18G|  8650K  (1)| 00:05:38 |
++|*  3 |    VIEW                              |                         |   152M|    15G|       |  4995K  (1)| 00:03:16 |
++|*  4 |     WINDOW SORT PUSHED RANK          |                         |   152M|    20G|    22G|  4995K  (1)| 00:03:16 |
++|*  5 |      HASH JOIN                       |                         |   152M|    20G|       |   105K  (2)| 00:00:05 |
+ |   6 |       TABLE ACCESS FULL              | NEIGHBOURHOODS          |  2497 | 64922 |       |     5   (0)| 00:00:01 |
+-|*  7 |       HASH JOIN OUTER                |                         |   152M|    16G|   185M|   107K  (1)| 00:00:05 |
+-|   8 |        MERGE JOIN                    |                         |  2339K|   158M|       |  4537   (3)| 00:00:01 |
++|*  7 |       HASH JOIN OUTER                |                         |   152M|    16G|   185M|   104K  (1)| 00:00:05 |
++|   8 |        MERGE JOIN                    |                         |  2339K|   158M|       |  7965   (2)| 00:00:01 |
+ |   9 |         SORT JOIN                    |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+ |  10 |          VIEW                        |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+ |  11 |           SORT GROUP BY              |                         |  2339K|   120M|       |  3924   (3)| 00:00:01 |
+ |* 12 |            TABLE ACCESS INMEMORY FULL| CALENDAR                |  2339K|   120M|       |  3863   (1)| 00:00:01 |
+-|* 13 |         SORT JOIN                    |                         | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
+-|  14 |          TABLE ACCESS INMEMORY FULL  | LISTINGS                | 63488 |  1612K|       |   140   (6)| 00:00:01 |
+-|  15 |        VIEW                          |                         |  4130K|   189M|       | 82035   (1)| 00:00:04 |
+-|  16 |         SORT GROUP BY                |                         |  4130K|    86M|       | 82035   (1)| 00:00:04 |
+-|  17 |          TABLE ACCESS INMEMORY FULL  | REVIEWS                 |  4130K|    86M|       | 81958   (1)| 00:00:04 |
++|* 13 |         SORT JOIN                    |                         | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
++|  14 |          TABLE ACCESS INMEMORY FULL  | LISTINGS                | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
++|  15 |        VIEW                          |                         |  4130K|   189M|       | 75314   (1)| 00:00:03 |
++|  16 |         SORT GROUP BY                |                         |  4130K|    86M|       | 75314   (1)| 00:00:03 |
++|  17 |          TABLE ACCESS INMEMORY FULL  | REVIEWS                 |  4130K|    86M|       | 75245   (1)| 00:00:03 |
+ ------------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+-------------------------------------------------------------------------------------------------------------------
+query06    | Duration (Avg)  | 0.1602          | 0.1390          | -13.23     | IMPROVED        | YES         
+           | Duration (Min)  | 0.1602          | 0.1390          | -          | -               |             
+           | Duration (Max)  | 0.1602          | 0.1390          | -          | -               |             
+           | Cost            | 86129.00        | 38851.00        | -54.89     | IMPROVED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (0)        | SAME (0)        | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query06 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -3,15 +3,15 @@
+ -----------------------------------------------------------------------------------------------------------
+ | Id  | Operation                       | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
+ -----------------------------------------------------------------------------------------------------------
+-|   0 | UPDATE STATEMENT                |                         |    32 |  1536 | 86129   (1)| 00:00:04 |
++|   0 | UPDATE STATEMENT                |                         |     8 |   384 | 38851   (1)| 00:00:02 |
+ |   1 |  UPDATE                         | CALENDAR                |       |       |            |          |
+-|*  2 |   HASH JOIN SEMI                |                         |    32 |  1536 | 86129   (1)| 00:00:04 |
++|*  2 |   HASH JOIN SEMI                |                         |     8 |   384 | 38851   (1)| 00:00:02 |
+ |*  3 |    TABLE ACCESS INMEMORY FULL   | CALENDAR                |   156 |  5460 |  3894   (2)| 00:00:01 |
+-|   4 |    VIEW                         | VW_NSO_1                |    27 |   351 | 82236   (1)| 00:00:04 |
++|   4 |    VIEW                         | VW_NSO_1                |     7 |    91 | 34957   (1)| 00:00:02 |
+ |*  5 |     FILTER                      |                         |       |       |            |          |
+-|*  6 |      HASH JOIN ANTI             |                         |    27 |  1107 | 82236   (1)| 00:00:04 |
+-|*  7 |       TABLE ACCESS INMEMORY FULL| LISTING_SCRAPE_SNAPSHOT |    71 |  1349 |   205   (1)| 00:00:01 |
+-|*  8 |       TABLE ACCESS INMEMORY FULL| REVIEWS                 |   114K|  2468K| 82031   (1)| 00:00:04 |
++|*  6 |      HASH JOIN ANTI             |                         |     7 |   287 | 34957   (1)| 00:00:02 |
++|*  7 |       TABLE ACCESS INMEMORY FULL| LISTING_SCRAPE_SNAPSHOT |    71 |  1349 |     9  (12)| 00:00:01 |
++|*  8 |       TABLE ACCESS INMEMORY FULL| REVIEWS                 |   209K|  4501K| 34947   (1)| 00:00:02 |
+ -----------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+-------------------------------------------------------------------------------------------------------------------
+query07    | Duration (Avg)  | 0.1690          | 0.3195          | 89.05      | DEGRADED        | YES         
+           | Duration (Min)  | 0.1690          | 0.3195          | -          | -               |             
+           | Duration (Max)  | 0.1690          | 0.3195          | -          | -               |             
+           | Cost            | 92035.00        | 35060.00        | -61.91     | IMPROVED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (0)        | SAME (0)        | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query07 ---
+--- inmemory Plan
++++ inmemory_capacity_high Plan
+@@ -1,24 +1,24 @@
+-Plan hash value: 4212154689
++Plan hash value: 1011635010
+  
+ -----------------------------------------------------------------------------------------------------------------------
+ | Id  | Operation                           | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+ -----------------------------------------------------------------------------------------------------------------------
+-|   0 | DELETE STATEMENT                    |                         |   156 |  9516 |       | 92035   (1)| 00:00:04 |
++|   0 | DELETE STATEMENT                    |                         |   156 |  9516 |       | 35060   (2)| 00:00:02 |
+ |   1 |  DELETE                             | CALENDAR                |       |       |       |            |          |
+-|*  2 |   HASH JOIN SEMI                    |                         |   156 |  9516 |       | 92035   (1)| 00:00:04 |
++|*  2 |   HASH JOIN SEMI                    |                         |   156 |  9516 |       | 35060   (2)| 00:00:02 |
+ |*  3 |    TABLE ACCESS INMEMORY FULL       | CALENDAR                |   156 |  7488 |       |  3919   (2)| 00:00:01 |
+-|   4 |    VIEW                             | VW_NSO_1                |   178K|  2264K|       | 88115   (1)| 00:00:04 |
++|   4 |    VIEW                             | VW_NSO_1                |   272K|  3465K|       | 31140   (2)| 00:00:02 |
+ |*  5 |     FILTER                          |                         |       |       |       |            |          |
+-|   6 |      SORT GROUP BY                  |                         |   178K|    27M|       | 88115   (1)| 00:00:04 |
+-|*  7 |       HASH JOIN RIGHT OUTER         |                         |   178K|    27M|       | 88110   (1)| 00:00:04 |
++|   6 |      SORT GROUP BY                  |                         |   272K|    42M|       | 31140   (2)| 00:00:02 |
++|*  7 |       HASH JOIN RIGHT OUTER         |                         |   272K|    42M|       | 31133   (2)| 00:00:02 |
+ |*  8 |        TABLE ACCESS INMEMORY FULL   | CALENDAR                |    58 |  2784 |       |  3861   (1)| 00:00:01 |
+-|*  9 |        HASH JOIN RIGHT OUTER        |                         |   178K|    19M|  5280K| 84249   (1)| 00:00:04 |
+-|* 10 |         TABLE ACCESS INMEMORY FULL  | REVIEWS                 |   114K|  3927K|       | 82059   (1)| 00:00:04 |
+-|* 11 |         HASH JOIN RIGHT OUTER       |                         | 63488 |  4960K|  2264K|  1657   (1)| 00:00:01 |
+-|* 12 |          TABLE ACCESS INMEMORY FULL | LISTING_SCRAPE_SNAPSHOT | 57786 |  1580K|       |   206   (1)| 00:00:01 |
+-|* 13 |          HASH JOIN                  |                         | 63487 |  3223K|  1520K|  1148   (1)| 00:00:01 |
+-|* 14 |           TABLE ACCESS FULL         | HOSTS                   | 40884 |  1038K|       |   819   (1)| 00:00:01 |
+-|  15 |           TABLE ACCESS INMEMORY FULL| LISTINGS                | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++|*  9 |        HASH JOIN OUTER              |                         |   272K|    29M|  5704K| 27271   (2)| 00:00:02 |
++|* 10 |         HASH JOIN RIGHT OUTER       |                         | 63487 |  4959K|  2360K|  1468   (2)| 00:00:01 |
++|* 11 |          TABLE ACCESS INMEMORY FULL | LISTING_SCRAPE_SNAPSHOT | 60267 |  1647K|       |    11  (28)| 00:00:01 |
++|* 12 |          HASH JOIN                  |                         | 63487 |  3223K|  1520K|  1149   (1)| 00:00:01 |
++|* 13 |           TABLE ACCESS FULL         | HOSTS                   | 40884 |  1038K|       |   819   (1)| 00:00:01 |
++|  14 |           TABLE ACCESS INMEMORY FULL| LISTINGS                | 63488 |  1612K|       |   141   (7)| 00:00:01 |
++|* 15 |         TABLE ACCESS INMEMORY FULL  | REVIEWS                 |   209K|  7162K|       | 25060   (2)| 00:00:01 |
+ -----------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+@@ -35,13 +35,13 @@
+        filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
+               "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+    9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+-  10 - inmemory("R"."date"(+)>=CURRENT_DATE-365)
++  10 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
++  11 - inmemory("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
++       filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
++  12 - access("L"."HOST_ID"="H"."HOST_ID")
++  13 - filter("H"."HOST_IS_SUPERHOST"=0)
++  15 - inmemory("R"."date"(+)>=CURRENT_DATE-365)
+        filter("R"."date"(+)>=CURRENT_DATE-365)
+-  11 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+-  12 - inmemory("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+-       filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+-  13 - access("L"."HOST_ID"="H"."HOST_ID")
+-  14 - filter("H"."HOST_IS_SUPERHOST"=0)
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+===================================================================================================================

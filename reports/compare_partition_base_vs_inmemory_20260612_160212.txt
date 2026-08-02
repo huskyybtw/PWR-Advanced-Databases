@@ -1,0 +1,667 @@
+
+===================================================================================================================
+                                                 COMPARISON REPORT                                                 
+===================================================================================================================
+Query      | Metric          | partition_base  | inmemory        | Diff (%)   | Status          | Plan Changed
+-------------------------------------------------------------------------------------------------------------------
+query01    | Duration (Avg)  | 1.0356          | 1.0357          | 0.01       | SAME            | YES         
+           | Duration (Min)  | 1.0356          | 1.0357          | -          | -               |             
+           | Duration (Max)  | 1.0356          | 1.0357          | -          | -               |             
+           | Cost            | 8741000000.00   | 6738000000.00   | -22.91     | IMPROVED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (6458)     | SAME (6458)     | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query01 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,58 +1,60 @@
+-Plan hash value: 2089516840
++Plan hash value: 3629504875
+  
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                                | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT                         |                             |    44G|    27T|       |  8741M  (1)| 94:51:19 |       |       |
+-|   1 |  TEMP TABLE TRANSFORMATION               |                             |       |       |       |            |          |       |       |
+-|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_XXX   |       |       |       |            |          |       |       |
+-|   3 |    HASH GROUP BY                         |                             |  1582K|    75M|       |  1979   (3)| 00:00:01 |       |       |
+-|   4 |     PARTITION RANGE SINGLE               |                             |  1582K|    75M|       |  1938   (1)| 00:00:01 |    73 |    73 |
+-|*  5 |      TABLE ACCESS FULL                   | CALENDAR                    |  1582K|    75M|       |  1938   (1)| 00:00:01 |    73 |    73 |
+-|   6 |   SORT ORDER BY                          |                             |    44G|    27T|    30T|  8741M  (1)| 94:51:19 |       |       |
+-|*  7 |    HASH JOIN                             |                             |    44G|    27T|    46M|  3413K (72)| 00:02:14 |       |       |
+-|   8 |     VIEW                                 |                             |  1582K|    28M|       |  8982   (1)| 00:00:01 |       |       |
+-|   9 |      HASH GROUP BY                       |                             |  1582K|   107M|       |  8982   (1)| 00:00:01 |       |       |
+-|* 10 |       HASH JOIN                          |                             |  1582K|   107M|       |  8941   (1)| 00:00:01 |       |       |
+-|  11 |        TABLE ACCESS FULL                 | NEIGHBOURHOODS              |  2497 | 64922 |       |     5   (0)| 00:00:01 |       |       |
+-|* 12 |        HASH JOIN                         |                             |  1582K|    67M|  2360K|  8932   (1)| 00:00:01 |       |       |
+-|  13 |         TABLE ACCESS FULL                | LISTINGS                    | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+-|  14 |         VIEW                             |                             |  1582K|    28M|       |  2920   (1)| 00:00:01 |       |       |
+-|  15 |          TABLE ACCESS FULL               | SYS_TEMP_XXX   |  1582K|    67M|       |  2920   (1)| 00:00:01 |       |       |
+-|* 16 |     HASH JOIN                            |                             |    23M|    14G|       |   217K  (1)| 00:00:09 |       |       |
+-|  17 |      TABLE ACCESS FULL                   | LOCATIONS                   |    41 |  5822 |       |     3   (0)| 00:00:01 |       |       |
+-|* 18 |      HASH JOIN                           |                             |    23M|    11G|       |   217K  (1)| 00:00:09 |       |       |
+-|  19 |       TABLE ACCESS FULL                  | NEIGHBOURHOODS              |  2497 |   377K|       |     5   (0)| 00:00:01 |       |       |
+-|* 20 |       HASH JOIN                          |                             |    23M|  8134M|    66M|   217K  (1)| 00:00:09 |       |       |
+-|* 21 |        VIEW                              |                             |  1582K|    48M|       |  2920   (1)| 00:00:01 |       |       |
+-|  22 |         TABLE ACCESS FULL                | SYS_TEMP_XXX   |  1582K|    67M|       |  2920   (1)| 00:00:01 |       |       |
+-|* 23 |        FILTER                            |                             |       |       |       |            |          |       |       |
+-|  24 |         NESTED LOOPS OUTER               |                             |   934K|   297M|       |   195K  (1)| 00:00:08 |       |       |
+-|* 25 |          HASH JOIN                       |                             | 63488 |    18M|  8760K|  5353   (1)| 00:00:01 |       |       |
+-|  26 |           TABLE ACCESS FULL              | HOSTS                       | 58214 |  8072K|       |   819   (1)| 00:00:01 |       |       |
+-|  27 |           TABLE ACCESS FULL              | LISTINGS                    | 63488 |    10M|       |  3568   (1)| 00:00:01 |       |       |
+-|  28 |          VIEW PUSHED PREDICATE           |                             |     1 |    24 |       |     3   (0)| 00:00:01 |       |       |
+-|  29 |           SORT GROUP BY                  |                             |  9348 |   200K|       |     3   (0)| 00:00:01 |       |       |
+-|* 30 |            INDEX RANGE SCAN              | IDX_REVIEWS_LISTING_DATE_V5 |  9348 |   200K|       |     3   (0)| 00:00:01 |       |       |
+-------------------------------------------------------------------------------------------------------------------------------------------------
++------------------------------------------------------------------------------------------------------------------------------
++| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++------------------------------------------------------------------------------------------------------------------------------
++|   0 | SELECT STATEMENT                         |                           |    34G|    21T|       |  6738M  (1)| 73:07:16 |
++|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
++|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_XXX |       |       |       |            |          |
++|   3 |    HASH GROUP BY                         |                           |  2339K|    91M|       |  3923   (3)| 00:00:01 |
++|*  4 |     TABLE ACCESS INMEMORY FULL           | CALENDAR                  |  2339K|    91M|       |  3862   (1)| 00:00:01 |
++|   5 |   SORT ORDER BY                          |                           |    34G|    21T|    23T|  6738M  (1)| 73:07:16 |
++|*  6 |    HASH JOIN                             |                           |    34G|    21T|    69M|  2390K (78)| 00:01:34 |
++|   7 |     VIEW                                 |                           |  2339K|    42M|       | 10738   (1)| 00:00:01 |
++|   8 |      HASH GROUP BY                       |                           |  2339K|   158M|       | 10738   (1)| 00:00:01 |
++|*  9 |       HASH JOIN                          |                           |  2339K|   158M|       | 10676   (1)| 00:00:01 |
++|  10 |        TABLE ACCESS FULL                 | NEIGHBOURHOODS            |  2497 | 64922 |       |     5   (0)| 00:00:01 |
++|* 11 |        HASH JOIN                         |                           |  2339K|   100M|  2360K| 10665   (1)| 00:00:01 |
++|  12 |         TABLE ACCESS INMEMORY FULL       | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
++|  13 |         VIEW                             |                           |  2339K|    42M|       |  3541   (1)| 00:00:01 |
++|  14 |          TABLE ACCESS FULL               | SYS_TEMP_XXX |  2339K|    91M|       |  3541   (1)| 00:00:01 |
++|* 15 |     HASH JOIN                            |                           |    11M|  7692M|       |   136K  (1)| 00:00:06 |
++|  16 |      TABLE ACCESS FULL                   | LOCATIONS                 |    41 |  5822 |       |     3   (0)| 00:00:01 |
++|* 17 |      HASH JOIN                           |                           |    11M|  6071M|       |   136K  (1)| 00:00:06 |
++|  18 |       TABLE ACCESS FULL                  | NEIGHBOURHOODS            |  2497 |   377K|       |     5   (0)| 00:00:01 |
++|* 19 |       HASH JOIN                          |                           |    11M|  4302M|    98M|   136K  (1)| 00:00:06 |
++|* 20 |        VIEW                              |                           |  2339K|    71M|       |  3541   (1)| 00:00:01 |
++|  21 |         TABLE ACCESS FULL                | SYS_TEMP_XXX |  2339K|    91M|       |  3541   (1)| 00:00:01 |
++|* 22 |        FILTER                            |                           |       |       |       |            |          |
++|* 23 |         HASH JOIN RIGHT OUTER            |                           |   324K|   106M|    14M|   122K  (1)| 00:00:05 |
++|  24 |          VIEW                            |                           |   324K|    10M|       |   115K  (1)| 00:00:05 |
++|  25 |           HASH GROUP BY                  |                           |   324K|  6970K|       |   115K  (1)| 00:00:05 |
++|* 26 |            TABLE ACCESS INMEMORY FULL    | REVIEWS                   |   324K|  6970K|       |   115K  (1)| 00:00:05 |
++|* 27 |          HASH JOIN                       |                           | 63488 |    18M|  8760K|  5353   (1)| 00:00:01 |
++|  28 |           TABLE ACCESS FULL              | HOSTS                     | 58214 |  8072K|       |   819   (1)| 00:00:01 |
++|  29 |           TABLE ACCESS INMEMORY FULL     | LISTINGS                  | 63488 |    10M|       |  3568   (1)| 00:00:01 |
++------------------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+-   5 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 2026-01-01 00:00:00', 
+-              'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND 
+-              TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')))
+-   7 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
++   4 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++   6 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
+        filter("CS"."AVG_PRICE_DEC">"CPA"."CITY_AVG_PRICE")
+-  10 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+-  12 - access("L"."LISTING_ID"="CS"."LISTING_ID")
+-  16 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
+-  18 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+-  20 - access("CS"."LISTING_ID"="L"."LISTING_ID")
+-  21 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
+-  23 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
+-  25 - access("H"."HOST_ID"="L"."HOST_ID")
+-  30 - access("R"."LISTING_ID"="L"."LISTING_ID" AND "R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++   9 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
++  11 - access("L"."LISTING_ID"="CS"."LISTING_ID")
++  15 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
++  17 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
++  19 - access("CS"."LISTING_ID"="L"."LISTING_ID")
++  20 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
++  22 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
++  23 - access("RS"."LISTING_ID"(+)="L"."LISTING_ID")
++  26 - inmemory("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++       filter("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++  27 - access("H"."HOST_ID"="L"."HOST_ID")
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+query02    | Duration (Avg)  | 5.5132          | 0.7953          | -85.57     | IMPROVED        | YES         
+           | Duration (Min)  | 5.5132          | 0.7953          | -          | -               |             
+           | Duration (Max)  | 5.5132          | 0.7953          | -          | -               |             
+           | Cost            | 210000.00       | 246000.00       | 17.14      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (279)      | SAME (279)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query02 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,44 +1,46 @@
+-Plan hash value: 397237463
++Plan hash value: 3596612296
+  
+-----------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                      | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT               |                             |  2911 |   540K|       |   210K  (1)| 00:00:09 |
+-|   1 |  SORT ORDER BY                 |                             |  2911 |   540K|  1021M|   210K  (1)| 00:00:09 |
+-|*  2 |   FILTER                       |                             |       |       |       |            |          |
+-|   3 |    HASH GROUP BY               |                             |  2911 |   540K|  1021M|   210K  (1)| 00:00:09 |
+-|   4 |     VIEW                       | VW_DAG_1                    |  5099K|   923M|       | 62165   (1)| 00:00:03 |
+-|   5 |      HASH GROUP BY             |                             |  5099K|  1930M|       | 62165   (1)| 00:00:03 |
+-|*  6 |       HASH JOIN OUTER          |                             |  5099K|  1930M|  5880K| 62025   (1)| 00:00:03 |
+-|*  7 |        HASH JOIN               |                             | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+-|*  8 |         TABLE ACCESS FULL      | LISTINGS                    | 16081 |   816K|       |  3568   (1)| 00:00:01 |
+-|*  9 |         HASH JOIN RIGHT SEMI   |                             | 15750 |  4768K|  1552K|  4696   (1)| 00:00:01 |
+-|  10 |          VIEW                  | VW_NSO_1                    | 63488 |   806K|       |  3570   (1)| 00:00:01 |
+-|* 11 |           FILTER               |                             |       |       |       |            |          |
+-|  12 |            HASH GROUP BY       |                             | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+-|  13 |             VIEW               | VW_DAG_0                    | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+-|  14 |              HASH GROUP BY     |                             | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
+-|* 15 |               TABLE ACCESS FULL| LISTINGS                    | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
+-|* 16 |          TABLE ACCESS FULL     | HOSTS                       | 15750 |  4568K|       |   819   (1)| 00:00:01 |
+-|  17 |        VIEW                    | index$_join$_004            |  5083K|   169M|       | 42153   (1)| 00:00:02 |
+-|* 18 |         HASH JOIN              |                             |       |       |       |            |          |
+-|  19 |          INDEX FAST FULL SCAN  | IDX_REVIEWS_LISTING_DATE_V5 |  5083K|   169M|       | 26039   (1)| 00:00:02 |
+-|  20 |          INDEX FAST FULL SCAN  | REVIEWS_V5_PK               |  5083K|   169M|       | 26653   (1)| 00:00:02 |
+-----------------------------------------------------------------------------------------------------------------------
++-------------------------------------------------------------------------------------------------------------
++| Id  | Operation                                | Name     | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++-------------------------------------------------------------------------------------------------------------
++|   0 | SELECT STATEMENT                         |          |  2911 |   540K|       |   246K  (1)| 00:00:10 |
++|   1 |  SORT ORDER BY                           |          |  2911 |   540K|   830M|   246K  (1)| 00:00:10 |
++|*  2 |   FILTER                                 |          |       |       |       |            |          |
++|   3 |    HASH GROUP BY                         |          |  2911 |   540K|   830M|   246K  (1)| 00:00:10 |
++|   4 |     VIEW                                 | VW_DAG_1 |  4145K|   751M|       |   125K  (1)| 00:00:05 |
++|   5 |      HASH GROUP BY                       |          |  4145K|  1569M|       |   125K  (1)| 00:00:05 |
++|*  6 |       HASH JOIN OUTER                    |          |  4145K|  1569M|  5880K|   125K  (1)| 00:00:05 |
++|   7 |        JOIN FILTER CREATE                | :BF0000  | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
++|*  8 |         HASH JOIN                        |          | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
++|*  9 |          TABLE ACCESS INMEMORY FULL      | LISTINGS | 16081 |   816K|       |  3568   (1)| 00:00:01 |
++|* 10 |          HASH JOIN RIGHT SEMI            |          | 15750 |  4768K|  1552K|  4696   (1)| 00:00:01 |
++|  11 |           VIEW                           | VW_NSO_1 | 63488 |   806K|       |  3570   (1)| 00:00:01 |
++|* 12 |            FILTER                        |          |       |       |       |            |          |
++|  13 |             HASH GROUP BY                |          | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
++|  14 |              VIEW                        | VW_DAG_0 | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
++|  15 |               HASH GROUP BY              |          | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
++|* 16 |                TABLE ACCESS INMEMORY FULL| LISTINGS | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
++|* 17 |           TABLE ACCESS FULL              | HOSTS    | 15750 |  4568K|       |   819   (1)| 00:00:01 |
++|  18 |        JOIN FILTER USE                   | :BF0000  |  4130K|   137M|       |   107K  (1)| 00:00:05 |
++|* 19 |         TABLE ACCESS INMEMORY FULL       | REVIEWS  |  4130K|   137M|       |   107K  (1)| 00:00:05 |
++-------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+    2 - filter(NVL(SUM("ITEM_5"),0)>50)
+    6 - access("LST"."LISTING_ID"="R"."LISTING_ID"(+))
+-   7 - access("H"."HOST_ID"="LST"."HOST_ID")
+-   8 - filter("LST"."INSTANT_BOOKABLE"=1)
+-   9 - access("H"."HOST_ID"="HOST_ID")
+-  11 - filter(COUNT("ITEM_1")>=2 AND NVL(SUM("ITEM_3"),0)>=3)
+-  15 - filter("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+-  16 - filter("H"."HOST_IS_SUPERHOST"=1 AND ("H"."HOST_RESPONSE_TIME"='within a few hours' OR 
++   8 - access("H"."HOST_ID"="LST"."HOST_ID")
++   9 - inmemory("LST"."INSTANT_BOOKABLE"=1)
++       filter("LST"."INSTANT_BOOKABLE"=1)
++  10 - access("H"."HOST_ID"="HOST_ID")
++  12 - filter(COUNT("ITEM_1")>=2 AND NVL(SUM("ITEM_3"),0)>=3)
++  16 - inmemory("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
++       filter("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
++  17 - filter("H"."HOST_IS_SUPERHOST"=1 AND ("H"."HOST_RESPONSE_TIME"='within a few hours' OR 
+               "H"."HOST_RESPONSE_TIME"='within an hour'))
+-  18 - access(ROWID=ROWID)
++  19 - inmemory(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
++       filter(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+query03    | Duration (Avg)  | 0.8329          | 0.8703          | 4.49       | DEGRADED        | YES         
+           | Duration (Min)  | 0.8329          | 0.8703          | -          | -               |             
+           | Duration (Max)  | 0.8329          | 0.8703          | -          | -               |             
+           | Cost            | 71376.00        | 137000.00       | 91.94      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (873)      | SAME (873)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query03 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,66 +1,68 @@
+-Plan hash value: 1456259263
++Plan hash value: 724558460
+  
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                                | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT                         |                             |   150M|    34G|       | 71376   (2)| 00:00:03 |       |       |
+-|   1 |  TEMP TABLE TRANSFORMATION               |                             |       |       |       |            |          |       |       |
+-|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_XXX   |       |       |       |            |          |       |       |
+-|   3 |    HASH GROUP BY                         |                             |  5083K|   252M|       | 10037   (4)| 00:00:01 |       |       |
+-|   4 |     MERGE JOIN                           |                             |  5083K|   252M|       |  9898   (2)| 00:00:01 |       |       |
+-|   5 |      SORT JOIN                           |                             |  5083K|   126M|       |  5858   (3)| 00:00:01 |       |       |
+-|   6 |       VIEW                               | VW_GBF_8                    |  5083K|   126M|       |  5858   (3)| 00:00:01 |       |       |
+-|   7 |        HASH GROUP BY                     |                             |  5083K|    63M|       |  5858   (3)| 00:00:01 |       |       |
+-|   8 |         INDEX FAST FULL SCAN             | IDX_REVIEWS_LISTING_DATE_V5 |  5083K|    63M|       |  5718   (1)| 00:00:01 |       |       |
+-|*  9 |      SORT JOIN                           |                             | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |       |       |
+-|  10 |       TABLE ACCESS FULL                  | LISTINGS                    | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+-|  11 |   WINDOW SORT                            |                             |   150M|    34G|       | 61338   (2)| 00:00:03 |       |       |
+-|* 12 |    HASH JOIN                             |                             |   150M|    34G|   184M| 51596   (2)| 00:00:03 |       |       |
+-|* 13 |     VIEW                                 |                             |  5083K|   126M|       |  9742   (1)| 00:00:01 |       |       |
+-|  14 |      TABLE ACCESS FULL                   | SYS_TEMP_XXX   |  5083K|   126M|       |  9742   (1)| 00:00:01 |       |       |
+-|  15 |      SORT AGGREGATE                      |                             |     1 |    13 |       |            |          |       |       |
+-|  16 |       VIEW                               |                             |  5083K|    63M|       |  9742   (1)| 00:00:01 |       |       |
+-|  17 |        TABLE ACCESS FULL                 | SYS_TEMP_XXX   |  5083K|   126M|       |  9742   (1)| 00:00:01 |       |       |
+-|  18 |     MERGE JOIN                           |                             |  1726K|   365M|       | 13193   (1)| 00:00:01 |       |       |
+-|  19 |      MERGE JOIN                          |                             |  1582K|   276M|       |  8984   (2)| 00:00:01 |       |       |
+-|  20 |       SORT JOIN                          |                             |  1582K|    28M|       |  6060   (2)| 00:00:01 |       |       |
+-|  21 |        VIEW                              |                             |  1582K|    28M|       |  6060   (2)| 00:00:01 |       |       |
+-|  22 |         HASH GROUP BY                    |                             |  1582K|    87M|       |  6060   (2)| 00:00:01 |       |       |
+-|  23 |          MERGE JOIN                      |                             |  1582K|    87M|       |  6019   (1)| 00:00:01 |       |       |
+-|  24 |           SORT JOIN                      |                             |  1582K|    48M|       |  1979   (3)| 00:00:01 |       |       |
+-|  25 |            VIEW                          | VW_GBC_14                   |  1582K|    48M|       |  1979   (3)| 00:00:01 |       |       |
+-|  26 |             HASH GROUP BY                |                             |  1582K|    55M|       |  1979   (3)| 00:00:01 |       |       |
+-|  27 |              PARTITION RANGE SINGLE      |                             |  1582K|    55M|       |  1938   (1)| 00:00:01 |    73 |    73 |
+-|* 28 |               TABLE ACCESS FULL          | CALENDAR                    |  1582K|    55M|       |  1938   (1)| 00:00:01 |    73 |    73 |
+-|* 29 |           SORT JOIN                      |                             | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |       |       |
+-|  30 |            TABLE ACCESS FULL             | LISTINGS                    | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+-|* 31 |       SORT JOIN                          |                             | 58214 |  9323K|    19M|  2924   (1)| 00:00:01 |       |       |
+-|  32 |        TABLE ACCESS FULL                 | HOSTS                       | 58214 |  9323K|       |   819   (1)| 00:00:01 |       |       |
+-|* 33 |      SORT JOIN                           |                             | 63488 |  2418K|  6488K|  4209   (1)| 00:00:01 |       |       |
+-|  34 |       VIEW                               |                             | 63488 |  2418K|       |  3570   (1)| 00:00:01 |       |       |
+-|* 35 |        FILTER                            |                             |       |       |       |            |          |       |       |
+-|  36 |         HASH GROUP BY                    |                             | 63488 |  2418K|       |  3570   (1)| 00:00:01 |       |       |
+-|  37 |          TABLE ACCESS FULL               | LISTINGS                    | 63488 |  2418K|       |  3568   (1)| 00:00:01 |       |       |
+-------------------------------------------------------------------------------------------------------------------------------------------------
++------------------------------------------------------------------------------------------------------------------------------
++| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++------------------------------------------------------------------------------------------------------------------------------
++|   0 | SELECT STATEMENT                         |                           |   181M|    41G|       |   137K  (1)| 00:00:06 |
++|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
++|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_XXX |       |       |       |            |          |
++|   3 |    HASH GROUP BY                         |                           |  4130K|   204M|       | 82729   (1)| 00:00:04 |
++|   4 |     MERGE JOIN                           |                           |  4130K|   204M|       | 82617   (1)| 00:00:04 |
++|   5 |      SORT JOIN                           |                           |  4130K|   102M|       | 82004   (1)| 00:00:04 |
++|   6 |       VIEW                               | VW_GBF_8                  |  4130K|   102M|       | 82004   (1)| 00:00:04 |
++|   7 |        HASH GROUP BY                     |                           |  4130K|    51M|       | 82004   (1)| 00:00:04 |
++|   8 |         TABLE ACCESS INMEMORY FULL       | REVIEWS                   |  4130K|    51M|       | 81927   (1)| 00:00:04 |
++|*  9 |      SORT JOIN                           |                           | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
++|  10 |       TABLE ACCESS INMEMORY FULL         | LISTINGS                  | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++|  11 |   WINDOW SORT                            |                           |   181M|    41G|       | 55146   (2)| 00:00:03 |
++|  12 |    MERGE JOIN                            |                           |   181M|    41G|       | 47231   (2)| 00:00:02 |
++|  13 |     MERGE JOIN                           |                           |  2551K|   540M|       |  8305   (3)| 00:00:01 |
++|  14 |      MERGE JOIN                          |                           |  2339K|   408M|       |  7522   (3)| 00:00:01 |
++|  15 |       SORT JOIN                          |                           |  2339K|    42M|       |  4597   (4)| 00:00:01 |
++|  16 |        VIEW                              |                           |  2339K|    42M|       |  4597   (4)| 00:00:01 |
++|  17 |         HASH GROUP BY                    |                           |  2339K|   129M|       |  4597   (4)| 00:00:01 |
++|  18 |          MERGE JOIN                      |                           |  2339K|   129M|       |  4536   (3)| 00:00:01 |
++|  19 |           SORT JOIN                      |                           |  2339K|    71M|       |  3923   (3)| 00:00:01 |
++|  20 |            VIEW                          | VW_GBC_14                 |  2339K|    71M|       |  3923   (3)| 00:00:01 |
++|  21 |             HASH GROUP BY                |                           |  2339K|    62M|       |  3923   (3)| 00:00:01 |
++|* 22 |              TABLE ACCESS INMEMORY FULL  | CALENDAR                  |  2339K|    62M|       |  3862   (1)| 00:00:01 |
++|* 23 |           SORT JOIN                      |                           | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
++|  24 |            TABLE ACCESS INMEMORY FULL    | LISTINGS                  | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++|* 25 |       SORT JOIN                          |                           | 58214 |  9323K|    19M|  2924   (1)| 00:00:01 |
++|  26 |        TABLE ACCESS FULL                 | HOSTS                     | 58214 |  9323K|       |   819   (1)| 00:00:01 |
++|* 27 |      SORT JOIN                           |                           | 63488 |  2418K|  6488K|   783   (2)| 00:00:01 |
++|  28 |       VIEW                               |                           | 63488 |  2418K|       |   144   (9)| 00:00:01 |
++|* 29 |        FILTER                            |                           |       |       |       |            |          |
++|  30 |         HASH GROUP BY                    |                           | 63488 |  2418K|       |   144   (9)| 00:00:01 |
++|  31 |          TABLE ACCESS INMEMORY FULL      | LISTINGS                  | 63488 |  2418K|       |   143   (8)| 00:00:01 |
++|* 32 |     SORT JOIN                            |                           |  4130K|   102M|   285M| 38446   (1)| 00:00:02 |
++|* 33 |      VIEW                                |                           |  4130K|   102M|       |  7916   (1)| 00:00:01 |
++|  34 |       TABLE ACCESS FULL                  | SYS_TEMP_XXX |  4130K|   102M|       |  7916   (1)| 00:00:01 |
++|  35 |       SORT AGGREGATE                     |                           |     1 |    13 |       |            |          |
++|  36 |        VIEW                              |                           |  4130K|    51M|       |  7916   (1)| 00:00:01 |
++|  37 |         TABLE ACCESS FULL                | SYS_TEMP_XXX |  4130K|   102M|       |  7916   (1)| 00:00:01 |
++------------------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+    9 - access("ITEM_1"="L"."LISTING_ID")
+        filter("ITEM_1"="L"."LISTING_ID")
+-  12 - access("HRS"."HOST_ID"="H"."HOST_ID")
+-  13 - filter("HRS"."TOTAL_REVIEWS"> (SELECT SUM("TOTAL_REVIEWS")/COUNT("TOTAL_REVIEWS") FROM  (SELECT /*+ CACHE ("T1") */ "C0" 
+-              "HOST_ID","C1" "TOTAL_REVIEWS" FROM "SYS"."SYS_TEMP_XXX" "T1") "HOST_REVIEW_STATS"))
+-  28 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 2026-01-01 00:00:00', 
+-              'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND 
+-              TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')))
+-  29 - access("ITEM_1"="L"."LISTING_ID")
++  22 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++  23 - access("ITEM_1"="L"."LISTING_ID")
+        filter("ITEM_1"="L"."LISTING_ID")
+-  31 - access("HPS"."HOST_ID"="H"."HOST_ID")
++  25 - access("HPS"."HOST_ID"="H"."HOST_ID")
+        filter("HPS"."HOST_ID"="H"."HOST_ID")
+-  33 - access("HLS"."HOST_ID"="H"."HOST_ID")
++  27 - access("HLS"."HOST_ID"="H"."HOST_ID")
+        filter("HLS"."HOST_ID"="H"."HOST_ID")
+-  35 - filter(COUNT(DISTINCT "L"."LISTING_ID")>=3 AND COUNT(DISTINCT "L"."NEIGHBOURHOOD_ID")>=2)
++  29 - filter(COUNT(DISTINCT "L"."LISTING_ID")>=3 AND COUNT(DISTINCT "L"."NEIGHBOURHOOD_ID")>=2)
++  32 - access("HRS"."HOST_ID"="H"."HOST_ID")
++       filter("HRS"."HOST_ID"="H"."HOST_ID")
++  33 - filter("HRS"."TOTAL_REVIEWS"> (SELECT SUM("TOTAL_REVIEWS")/COUNT("TOTAL_REVIEWS") FROM  (SELECT /*+ CACHE 
++              ("T1") */ "C0" "HOST_ID","C1" "TOTAL_REVIEWS" FROM "SYS"."SYS_TEMP_XXX" "T1") "HOST_REVIEW_STATS"))
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+query04    | Duration (Avg)  | 0.3078          | 0.4941          | 60.53      | DEGRADED        | YES         
+           | Duration (Min)  | 0.3078          | 0.4941          | -          | -               |             
+           | Duration (Max)  | 0.3078          | 0.4941          | -          | -               |             
+           | Cost            | 11688.00        | 83430.00        | 613.81     | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (438)      | SAME (335)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query04 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,34 +1,33 @@
+-Plan hash value: 3761062743
++Plan hash value: 963331154
+  
+-------------------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                    | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-------------------------------------------------------------------------------------------------------------------------------------
+-|   0 | SELECT STATEMENT             |                             | 49704 |    15M|       | 11688   (2)| 00:00:01 |       |       |
+-|   1 |  SORT ORDER BY               |                             | 49704 |    15M|       | 11688   (2)| 00:00:01 |       |       |
+-|   2 |   HASH GROUP BY              |                             | 49704 |    15M|       | 11688   (2)| 00:00:01 |       |       |
+-|*  3 |    HASH JOIN                 |                             | 49704 |    15M|       | 11684   (2)| 00:00:01 |       |       |
+-|   4 |     TABLE ACCESS FULL        | NEIGHBOURHOODS              |  2497 |   346K|       |     5   (0)| 00:00:01 |       |       |
+-|*  5 |     HASH JOIN                |                             | 49704 |  9076K|  2328K| 11679   (2)| 00:00:01 |       |       |
+-|   6 |      PARTITION RANGE ALL     |                             | 76858 |  1426K|       |   820   (1)| 00:00:01 |     1 |1048575|
+-|   7 |       TABLE ACCESS FULL      | LISTING_SCRAPE_SNAPSHOT     | 76858 |  1426K|       |   820   (1)| 00:00:01 |     1 |1048575|
+-|*  8 |      HASH JOIN SEMI          |                             | 49704 |  8154K|  8112K| 10322   (2)| 00:00:01 |       |       |
+-|   9 |       JOIN FILTER CREATE     | :BF0000                     | 49704 |  7523K|       |  3568   (1)| 00:00:01 |       |       |
+-|* 10 |        TABLE ACCESS FULL     | LISTINGS                    | 49704 |  7523K|       |  3568   (1)| 00:00:01 |       |       |
+-|  11 |       VIEW                   | VW_NSO_1                    |   417K|  5299K|       |  5865   (3)| 00:00:01 |       |       |
+-|* 12 |        HASH GROUP BY         |                             |   417K|  8968K|       |  5865   (3)| 00:00:01 |       |       |
+-|  13 |         JOIN FILTER USE      | :BF0000                     |   417K|  8968K|       |  5855   (3)| 00:00:01 |       |       |
+-|* 14 |          INDEX FAST FULL SCAN| IDX_REVIEWS_LISTING_DATE_V5 |   417K|  8968K|       |  5855   (3)| 00:00:01 |       |       |
+-------------------------------------------------------------------------------------------------------------------------------------
++---------------------------------------------------------------------------------------------------------------------
++| Id  | Operation                         | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++---------------------------------------------------------------------------------------------------------------------
++|   0 | SELECT STATEMENT                  |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
++|   1 |  SORT ORDER BY                    |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
++|   2 |   HASH GROUP BY                   |                         | 49705 |    15M|       | 83430   (1)| 00:00:04 |
++|*  3 |    HASH JOIN                      |                         | 49705 |    15M|       | 83426   (1)| 00:00:04 |
++|   4 |     TABLE ACCESS FULL             | NEIGHBOURHOODS          |  2497 |   346K|       |     5   (0)| 00:00:01 |
++|*  5 |     HASH JOIN                     |                         | 49705 |  9076K|  1752K| 83421   (1)| 00:00:04 |
++|   6 |      TABLE ACCESS INMEMORY FULL   | LISTING_SCRAPE_SNAPSHOT | 57786 |  1072K|       |   204   (0)| 00:00:01 |
++|*  7 |      HASH JOIN RIGHT SEMI         |                         | 49704 |  8154K|  2808K| 82707   (1)| 00:00:04 |
++|   8 |       VIEW                        | VW_NSO_1                |   114K|  1458K|       | 82033   (1)| 00:00:04 |
++|*  9 |        HASH GROUP BY              |                         |   114K|  2468K|       | 82033   (1)| 00:00:04 |
++|* 10 |         TABLE ACCESS INMEMORY FULL| REVIEWS                 |   114K|  2468K|       | 82031   (1)| 00:00:04 |
++|* 11 |       TABLE ACCESS INMEMORY FULL  | LISTINGS                | 49704 |  7523K|       |   144   (9)| 00:00:01 |
++---------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+    3 - access("L"."NEIGHBOURHOOD_ID"="N"."NEIGHBOURHOOD_ID")
+    5 - access("L"."LISTING_ID"="SNAP"."LISTING_ID")
+-   8 - access("L"."LISTING_ID"="LISTING_ID")
+-  10 - filter("L"."ROOM_TYPE"='Entire home/apt')
+-  12 - filter(COUNT(*)>20)
+-  14 - filter("R"."date">=CURRENT_DATE-365)
++   7 - access("L"."LISTING_ID"="LISTING_ID")
++   9 - filter(COUNT(*)>20)
++  10 - inmemory("R"."date">=CURRENT_DATE-365)
++       filter("R"."date">=CURRENT_DATE-365)
++  11 - inmemory("L"."ROOM_TYPE"='Entire home/apt')
++       filter("L"."ROOM_TYPE"='Entire home/apt')
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+query05    | Duration (Avg)  | 1.1304          | 1.7206          | 52.21      | DEGRADED        | YES         
+           | Duration (Min)  | 1.1304          | 1.7206          | -          | -               |             
+           | Duration (Max)  | 1.1304          | 1.7206          | -          | -               |             
+           | Cost            | 7149000.00      | 8653000.00      | 21.04      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (656)      | SAME (656)      | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query05 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,28 +1,27 @@
+-Plan hash value: 4233604150
++Plan hash value: 2738639543
+  
+-----------------------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                        | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-----------------------------------------------------------------------------------------------------------------------------------------
+-|   0 | INSERT STATEMENT                 |                             |   126M|    12G|       |  7149K  (1)| 00:04:40 |       |       |
+-|   1 |  LOAD TABLE CONVENTIONAL         | LISTING_SCRAPE_SNAPSHOT     |       |       |       |            |          |       |       |
+-|   2 |   WINDOW SORT                    |                             |   126M|    12G|    15G|  7149K  (1)| 00:04:40 |       |       |
+-|*  3 |    VIEW                          |                             |   126M|    12G|       |  4106K  (1)| 00:02:41 |       |       |
+-|*  4 |     WINDOW SORT PUSHED RANK      |                             |   126M|    17G|    18G|  4106K  (1)| 00:02:41 |       |       |
+-|*  5 |      HASH JOIN                   |                             |   126M|    17G|       | 33219   (3)| 00:00:02 |       |       |
+-|   6 |       TABLE ACCESS FULL          | NEIGHBOURHOODS              |  2497 | 64922 |       |     5   (0)| 00:00:01 |       |       |
+-|*  7 |       HASH JOIN OUTER            |                             |   126M|    14G|   125M| 32870   (2)| 00:00:02 |       |       |
+-|   8 |        MERGE JOIN                |                             |  1582K|   107M|       |  6020   (2)| 00:00:01 |       |       |
+-|   9 |         SORT JOIN                |                             |  1582K|    67M|       |  1980   (3)| 00:00:01 |       |       |
+-|  10 |          VIEW                    |                             |  1582K|    67M|       |  1980   (3)| 00:00:01 |       |       |
+-|  11 |           SORT GROUP BY          |                             |  1582K|    95M|       |  1980   (3)| 00:00:01 |       |       |
+-|  12 |            PARTITION RANGE SINGLE|                             |  1582K|    95M|       |  1939   (1)| 00:00:01 |    73 |    73 |
+-|* 13 |             TABLE ACCESS FULL    | CALENDAR                    |  1582K|    95M|       |  1939   (1)| 00:00:01 |    73 |    73 |
+-|* 14 |         SORT JOIN                |                             | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |       |       |
+-|  15 |          TABLE ACCESS FULL       | LISTINGS                    | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+-|  16 |        VIEW                      |                             |  5083K|   232M|       |  5858   (3)| 00:00:01 |       |       |
+-|  17 |         SORT GROUP BY            |                             |  5083K|   106M|       |  5858   (3)| 00:00:01 |       |       |
+-|  18 |          INDEX FAST FULL SCAN    | IDX_REVIEWS_LISTING_DATE_V5 |  5083K|   106M|       |  5718   (1)| 00:00:01 |       |       |
+-----------------------------------------------------------------------------------------------------------------------------------------
++------------------------------------------------------------------------------------------------------------------------
++| Id  | Operation                            | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++------------------------------------------------------------------------------------------------------------------------
++|   0 | INSERT STATEMENT                     |                         |   152M|    15G|       |  8653K  (1)| 00:05:39 |
++|   1 |  LOAD TABLE CONVENTIONAL             | LISTING_SCRAPE_SNAPSHOT |       |       |       |            |          |
++|   2 |   WINDOW SORT                        |                         |   152M|    15G|    18G|  8653K  (1)| 00:05:39 |
++|*  3 |    VIEW                              |                         |   152M|    15G|       |  4998K  (1)| 00:03:16 |
++|*  4 |     WINDOW SORT PUSHED RANK          |                         |   152M|    20G|    22G|  4998K  (1)| 00:03:16 |
++|*  5 |      HASH JOIN                       |                         |   152M|    20G|       |   108K  (2)| 00:00:05 |
++|   6 |       TABLE ACCESS FULL              | NEIGHBOURHOODS          |  2497 | 64922 |       |     5   (0)| 00:00:01 |
++|*  7 |       HASH JOIN OUTER                |                         |   152M|    16G|   185M|   107K  (1)| 00:00:05 |
++|   8 |        MERGE JOIN                    |                         |  2339K|   158M|       |  4537   (3)| 00:00:01 |
++|   9 |         SORT JOIN                    |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
++|  10 |          VIEW                        |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
++|  11 |           SORT GROUP BY              |                         |  2339K|   120M|       |  3924   (3)| 00:00:01 |
++|* 12 |            TABLE ACCESS INMEMORY FULL| CALENDAR                |  2339K|   120M|       |  3863   (1)| 00:00:01 |
++|* 13 |         SORT JOIN                    |                         | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
++|  14 |          TABLE ACCESS INMEMORY FULL  | LISTINGS                | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++|  15 |        VIEW                          |                         |  4130K|   189M|       | 82035   (1)| 00:00:04 |
++|  16 |         SORT GROUP BY                |                         |  4130K|    86M|       | 82035   (1)| 00:00:04 |
++|  17 |          TABLE ACCESS INMEMORY FULL  | REVIEWS                 |  4130K|    86M|       | 81958   (1)| 00:00:04 |
++------------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+@@ -32,10 +31,11 @@
+               ,INTERNAL_FUNCTION("CAL"."AVG_PRICE") DESC )<=20)
+    5 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+    7 - access("REV"."LISTING_ID"(+)="L"."LISTING_ID")
+-  13 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 2026-01-01 
+-              00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd 
+-              hh24:mi:ss')) AND TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')))
+-  14 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
++  12 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
++              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
++  13 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
+        filter("CAL"."LISTING_ID"="L"."LISTING_ID")
+  
+ Note
+-------------------------------------------------------------------------------------------------------------------
+query06    | Duration (Avg)  | 0.0375          | 0.1602          | 327.20     | DEGRADED        | YES         
+           | Duration (Min)  | 0.0375          | 0.1602          | -          | -               |             
+           | Duration (Max)  | 0.0375          | 0.1602          | -          | -               |             
+           | Cost            | 1153.00         | 86129.00        | 7369.99    | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (0)        | SAME (0)        | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query06 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,32 +1,32 @@
+-Plan hash value: 3376321236
++Plan hash value: 3712227048
+  
+--------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                 | Name                        | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+--------------------------------------------------------------------------------------------------------------------------
+-|   0 | UPDATE STATEMENT          |                             |     1 |    57 |  1153   (1)| 00:00:01 |       |       |
+-|   1 |  UPDATE                   | CALENDAR                    |       |       |            |          |       |       |
+-|   2 |   NESTED LOOPS            |                             |     1 |    57 |  1153   (1)| 00:00:01 |       |       |
+-|   3 |    VIEW                   | VW_NSO_1                    |     1 |    13 |  1150   (1)| 00:00:01 |       |       |
+-|   4 |     SORT UNIQUE           |                             |     1 |    41 |            |          |       |       |
+-|*  5 |      FILTER               |                             |       |       |            |          |       |       |
+-|   6 |       NESTED LOOPS ANTI   |                             |     1 |    41 |  1150   (1)| 00:00:01 |       |       |
+-|   7 |        PARTITION RANGE ALL|                             |    46 |   874 |  1058   (1)| 00:00:01 |     1 |1048575|
+-|*  8 |         TABLE ACCESS FULL | LISTING_SCRAPE_SNAPSHOT     |    46 |   874 |  1058   (1)| 00:00:01 |     1 |1048575|
+-|*  9 |        INDEX RANGE SCAN   | IDX_REVIEWS_LISTING_DATE_V5 |   417K|  8968K|     2   (0)| 00:00:01 |       |       |
+-|* 10 |    INDEX RANGE SCAN       | IDX_CALENDAR_COVERING_V5    |     1 |    44 |     2   (0)| 00:00:01 |       |       |
+--------------------------------------------------------------------------------------------------------------------------
++-----------------------------------------------------------------------------------------------------------
++| Id  | Operation                       | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
++-----------------------------------------------------------------------------------------------------------
++|   0 | UPDATE STATEMENT                |                         |    32 |  1536 | 86129   (1)| 00:00:04 |
++|   1 |  UPDATE                         | CALENDAR                |       |       |            |          |
++|*  2 |   HASH JOIN SEMI                |                         |    32 |  1536 | 86129   (1)| 00:00:04 |
++|*  3 |    TABLE ACCESS INMEMORY FULL   | CALENDAR                |   156 |  5460 |  3894   (2)| 00:00:01 |
++|   4 |    VIEW                         | VW_NSO_1                |    27 |   351 | 82236   (1)| 00:00:04 |
++|*  5 |     FILTER                      |                         |       |       |            |          |
++|*  6 |      HASH JOIN ANTI             |                         |    27 |  1107 | 82236   (1)| 00:00:04 |
++|*  7 |       TABLE ACCESS INMEMORY FULL| LISTING_SCRAPE_SNAPSHOT |    71 |  1349 |   205   (1)| 00:00:01 |
++|*  8 |       TABLE ACCESS INMEMORY FULL| REVIEWS                 |   114K|  2468K| 82031   (1)| 00:00:04 |
++-----------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
++   2 - access("C"."LISTING_ID"="LISTING_ID")
++   3 - inmemory("C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
++       filter("C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
+    5 - filter(CURRENT_DATE+30>=CURRENT_DATE)
+-   8 - filter("SNAP"."PRICE"<2.0E+001D)
+-   9 - access("R"."LISTING_ID"="SNAP"."LISTING_ID" AND "R"."date">=CURRENT_DATE-365)
+-  10 - access("C"."LISTING_ID"="LISTING_ID" AND "C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
+-       filter(TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(CURRENT_DATE) AND 
+-              TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(CURRENT_DATE+30))
++   6 - access("R"."LISTING_ID"="SNAP"."LISTING_ID")
++   7 - inmemory("SNAP"."PRICE"<2.0E+001D)
++       filter("SNAP"."PRICE"<2.0E+001D)
++   8 - inmemory("R"."date">=CURRENT_DATE-365)
++       filter("R"."date">=CURRENT_DATE-365)
+  
+ Note
+ -----
+    - dynamic statistics used: dynamic sampling (level=2)
+-   - this is an adaptive plan
+-------------------------------------------------------------------------------------------------------------------
+query07    | Duration (Avg)  | 1.1386          | 0.1690          | -85.16     | IMPROVED        | YES         
+           | Duration (Min)  | 1.1386          | 0.1690          | -          | -               |             
+           | Duration (Max)  | 1.1386          | 0.1690          | -          | -               |             
+           | Cost            | 49370.00        | 92035.00        | 86.42      | DEGRADED        |             
+           | Output          | SAME            | SAME            | -          | NO              |             
+           | Rows Impacted   | SAME (0)        | SAME (0)        | -          | -               |             
+-------------------------------------------------------------------------------------------------------------------
+--- QUERY PLAN DIFF FOR query07 ---
+--- partition_base Plan
++++ inmemory Plan
+@@ -1,52 +1,47 @@
+-Plan hash value: 3408503390
++Plan hash value: 4212154689
+  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+-| Id  | Operation                                         | Name                           | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+-|   0 | DELETE STATEMENT                                  |                                |  1202 | 84140 |       | 49370   (1)| 00:00:02 |       |       |
+-|   1 |  DELETE                                           | CALENDAR                       |       |       |       |            |          |       |       |
+-|   2 |   MERGE JOIN                                      |                                |  1202 | 84140 |       | 49370   (1)| 00:00:02 |       |       |
+-|   3 |    SORT JOIN                                      |                                |   480K|  6103K|       | 49324   (1)| 00:00:02 |       |       |
+-|   4 |     VIEW                                          | VW_NSO_1                       |   480K|  6103K|       | 49324   (1)| 00:00:02 |       |       |
+-|*  5 |      FILTER                                       |                                |       |       |       |            |          |       |       |
+-|   6 |       SORT GROUP BY                               |                                |   480K|    78M|       | 49324   (1)| 00:00:02 |       |       |
+-|*  7 |        HASH JOIN RIGHT OUTER                      |                                |   480K|    78M|       | 49312   (1)| 00:00:02 |       |       |
+-|*  8 |         TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED| CALENDAR                       |    40 |  2280 |       |    45   (0)| 00:00:01 | ROWID | ROWID |
+-|*  9 |          INDEX RANGE SCAN                         | IDX_CALENDAR_TRUNC_DATE_FBI_V5 |   159 |       |       |     3   (0)| 00:00:01 |       |       |
+-|* 10 |         HASH JOIN OUTER                           |                                |   480K|    52M|  5704K| 49266   (1)| 00:00:02 |       |       |
+-|* 11 |          HASH JOIN RIGHT OUTER                    |                                | 63487 |  4959K|  1608K|  5905   (1)| 00:00:01 |       |       |
+-|  12 |           PARTITION RANGE ITERATOR                |                                | 40962 |  1120K|       |  1059   (1)| 00:00:01 |   KEY |1048575|
+-|* 13 |            TABLE ACCESS FULL                      | LISTING_SCRAPE_SNAPSHOT        | 40962 |  1120K|       |  1059   (1)| 00:00:01 |   KEY |1048575|
+-|* 14 |           HASH JOIN                               |                                | 63487 |  3223K|  1520K|  4576   (1)| 00:00:01 |       |       |
+-|* 15 |            TABLE ACCESS FULL                      | HOSTS                          | 40884 |  1038K|       |   819   (1)| 00:00:01 |       |       |
+-|  16 |            TABLE ACCESS FULL                      | LISTINGS                       | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+-|  17 |          VIEW                                     | index$_join$_005               |   417K|    13M|       | 42153   (1)| 00:00:02 |       |       |
+-|* 18 |           HASH JOIN                               |                                |       |       |       |            |          |       |       |
+-|* 19 |            INDEX FAST FULL SCAN                   | IDX_REVIEWS_LISTING_DATE_V5    |   417K|    13M|       | 26039   (1)| 00:00:02 |       |       |
+-|  20 |            INDEX FAST FULL SCAN                   | REVIEWS_V5_PK                  |   417K|    13M|       | 26653   (1)| 00:00:02 |       |       |
+-|* 21 |    SORT JOIN                                      |                                |   159 |  9063 |       |    46   (3)| 00:00:01 |       |       |
+-|* 22 |     TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED    | CALENDAR                       |   159 |  9063 |       |    45   (0)| 00:00:01 | ROWID | ROWID |
+-|* 23 |      INDEX RANGE SCAN                             | IDX_CALENDAR_TRUNC_DATE_FBI_V5 |   159 |       |       |     3   (0)| 00:00:01 |       |       |
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
++-----------------------------------------------------------------------------------------------------------------------
++| Id  | Operation                           | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
++-----------------------------------------------------------------------------------------------------------------------
++|   0 | DELETE STATEMENT                    |                         |   156 |  9516 |       | 92035   (1)| 00:00:04 |
++|   1 |  DELETE                             | CALENDAR                |       |       |       |            |          |
++|*  2 |   HASH JOIN SEMI                    |                         |   156 |  9516 |       | 92035   (1)| 00:00:04 |
++|*  3 |    TABLE ACCESS INMEMORY FULL       | CALENDAR                |   156 |  7488 |       |  3919   (2)| 00:00:01 |
++|   4 |    VIEW                             | VW_NSO_1                |   178K|  2264K|       | 88115   (1)| 00:00:04 |
++|*  5 |     FILTER                          |                         |       |       |       |            |          |
++|   6 |      SORT GROUP BY                  |                         |   178K|    27M|       | 88115   (1)| 00:00:04 |
++|*  7 |       HASH JOIN RIGHT OUTER         |                         |   178K|    27M|       | 88110   (1)| 00:00:04 |
++|*  8 |        TABLE ACCESS INMEMORY FULL   | CALENDAR                |    58 |  2784 |       |  3861   (1)| 00:00:01 |
++|*  9 |        HASH JOIN RIGHT OUTER        |                         |   178K|    19M|  5280K| 84249   (1)| 00:00:04 |
++|* 10 |         TABLE ACCESS INMEMORY FULL  | REVIEWS                 |   114K|  3927K|       | 82059   (1)| 00:00:04 |
++|* 11 |         HASH JOIN RIGHT OUTER       |                         | 63488 |  4960K|  2264K|  1657   (1)| 00:00:01 |
++|* 12 |          TABLE ACCESS INMEMORY FULL | LISTING_SCRAPE_SNAPSHOT | 57786 |  1580K|       |   206   (1)| 00:00:01 |
++|* 13 |          HASH JOIN                  |                         | 63487 |  3223K|  1520K|  1148   (1)| 00:00:01 |
++|* 14 |           TABLE ACCESS FULL         | HOSTS                   | 40884 |  1038K|       |   819   (1)| 00:00:01 |
++|  15 |           TABLE ACCESS INMEMORY FULL| LISTINGS                | 63488 |  1612K|       |   140   (6)| 00:00:01 |
++-----------------------------------------------------------------------------------------------------------------------
+  
+ Predicate Information (identified by operation id):
+ ---------------------------------------------------
+  
+-   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
++   2 - access("C"."LISTING_ID"="LISTING_ID")
++   3 - inmemory("C"."date"<CURRENT_DATE-365)
++       filter("C"."date"<CURRENT_DATE-365)
++   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
++              MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+    7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+-   8 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+-   9 - access("C_RECENT"."SYS_NC00008$"(+)>=TRUNC(CURRENT_DATE-30) AND "C_RECENT"."SYS_NC00008$"(+)<=TRUNC(CURRENT_DATE))
+-  10 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
++   8 - inmemory("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
++              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
++       filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
++              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
++   9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
++  10 - inmemory("R"."date"(+)>=CURRENT_DATE-365)
++       filter("R"."date"(+)>=CURRENT_DATE-365)
+   11 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+-  13 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+-  14 - access("L"."HOST_ID"="H"."HOST_ID")
+-  15 - filter("H"."HOST_IS_SUPERHOST"=0)
+-  18 - access(ROWID=ROWID)
+-  19 - filter("R"."date">=CURRENT_DATE-365)
+-  21 - access("C"."LISTING_ID"="LISTING_ID")
+-       filter("C"."LISTING_ID"="LISTING_ID")
+-  22 - filter("C"."date"<CURRENT_DATE-365)
+-  23 - access(TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(CURRENT_DATE-365))
++  12 - inmemory("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
++       filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
++  13 - access("L"."HOST_ID"="H"."HOST_ID")
++  14 - filter("H"."HOST_IS_SUPERHOST"=0)
+  
+ Note
+ -----
+-------------------------------------------------------------------------------------------------------------------
+===================================================================================================================

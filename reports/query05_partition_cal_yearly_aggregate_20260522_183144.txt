@@ -1,0 +1,61 @@
+=== AGGREGATE REPORT: query05 ===
+Tag: partition_cal_yearly
+Populations: 3
+Avg Total Duration (s): 1.8664
+Min Duration (s): 1.8359
+Max Duration (s): 1.8928
+Variance Duration: 0.000822
+Avg Cost: 5989000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (656)
+
+--- Individual Run Files ---
+- query05_massive_snapshot_generation_partition_cal_yearly_run1_20260522_183144.txt
+- query05_massive_snapshot_generation_partition_cal_yearly_run2_20260522_183144.txt
+- query05_massive_snapshot_generation_partition_cal_yearly_run3_20260522_183144.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 2900191183
+ 
+------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                        | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+------------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                 |                         |   104M|    10G|       |  5989K  (1)| 00:03:54 |       |       |
+|   1 |  LOAD TABLE CONVENTIONAL         | LISTING_SCRAPE_SNAPSHOT |       |       |       |            |          |       |       |
+|   2 |   WINDOW SORT                    |                         |   104M|    10G|    12G|  5989K  (1)| 00:03:54 |       |       |
+|*  3 |    VIEW                          |                         |   104M|    10G|       |  3487K  (1)| 00:02:17 |       |       |
+|*  4 |     WINDOW SORT PUSHED RANK      |                         |   104M|    14G|    15G|  3487K  (1)| 00:02:17 |       |       |
+|*  5 |      HASH JOIN                   |                         |   104M|    14G|       |   140K  (1)| 00:00:06 |       |       |
+|   6 |       TABLE ACCESS FULL          | NEIGHBOURHOODS          |  2497 | 64922 |       |     5   (0)| 00:00:01 |       |       |
+|*  7 |       HASH JOIN OUTER            |                         |   104M|    11G|   126M|   139K  (1)| 00:00:06 |       |       |
+|   8 |        MERGE JOIN                |                         |  1601K|   108M|       |  6021   (2)| 00:00:01 |       |       |
+|   9 |         SORT JOIN                |                         |  1601K|    68M|       |  1980   (3)| 00:00:01 |       |       |
+|  10 |          VIEW                    |                         |  1601K|    68M|       |  1980   (3)| 00:00:01 |       |       |
+|  11 |           SORT GROUP BY          |                         |  1601K|    96M|       |  1980   (3)| 00:00:01 |       |       |
+|  12 |            PARTITION RANGE SINGLE|                         |  1601K|    96M|       |  1939   (1)| 00:00:01 |     7 |     7 |
+|* 13 |             TABLE ACCESS FULL    | CALENDAR                |  1601K|    96M|       |  1939   (1)| 00:00:01 |     7 |     7 |
+|* 14 |         SORT JOIN                |                         | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |       |       |
+|  15 |          TABLE ACCESS FULL       | LISTINGS                | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+|  16 |        VIEW                      |                         |  4130K|   189M|       |   115K  (1)| 00:00:05 |       |       |
+|  17 |         SORT GROUP BY            |                         |  4130K|    86M|       |   115K  (1)| 00:00:05 |       |       |
+|  18 |          TABLE ACCESS FULL       | REVIEWS                 |  4130K|    86M|       |   115K  (1)| 00:00:05 |       |       |
+------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - filter("RNK"<=20)
+   4 - filter(DENSE_RANK() OVER ( PARTITION BY "N"."LOCATION_ID" ORDER BY NVL("REV"."REVIEWS_CNT",0) DESC 
+              ,INTERNAL_FUNCTION("CAL"."AVG_PRICE") DESC )<=20)
+   5 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+   7 - access("REV"."LISTING_ID"(+)="L"."LISTING_ID")
+  13 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 2026-01-01 
+              00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 
+              'syyyy-mm-dd hh24:mi:ss')) AND TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd 
+              hh24:mi:ss')))
+  14 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
+       filter("CAL"."LISTING_ID"="L"."LISTING_ID")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,52 @@
+=== AGGREGATE REPORT: query04 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 0.3007
+Min Duration (s): 0.2950
+Max Duration (s): 0.3110
+Variance Duration: 0.000079
+Avg Cost: 11733.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (438)
+
+--- Individual Run Files ---
+- query04_financial_impact_projection_partition_base_run1_20260522_182707.txt
+- query04_financial_impact_projection_partition_base_run2_20260522_182707.txt
+- query04_financial_impact_projection_partition_base_run3_20260522_182707.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3761062743
+ 
+------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                    | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |                             | 49704 |    15M|       | 11733   (2)| 00:00:01 |       |       |
+|   1 |  SORT ORDER BY               |                             | 49704 |    15M|       | 11733   (2)| 00:00:01 |       |       |
+|   2 |   HASH GROUP BY              |                             | 49704 |    15M|       | 11733   (2)| 00:00:01 |       |       |
+|*  3 |    HASH JOIN                 |                             | 49704 |    15M|       | 11729   (2)| 00:00:01 |       |       |
+|   4 |     TABLE ACCESS FULL        | NEIGHBOURHOODS              |  2497 |   346K|       |     5   (0)| 00:00:01 |       |       |
+|*  5 |     HASH JOIN                |                             | 49704 |  9076K|  2328K| 11724   (2)| 00:00:01 |       |       |
+|   6 |      PARTITION RANGE ALL     |                             | 76858 |  1426K|       |   820   (1)| 00:00:01 |     1 |1048575|
+|   7 |       TABLE ACCESS FULL      | LISTING_SCRAPE_SNAPSHOT     | 76858 |  1426K|       |   820   (1)| 00:00:01 |     1 |1048575|
+|*  8 |      HASH JOIN SEMI          |                             | 49704 |  8154K|  8112K| 10367   (2)| 00:00:01 |       |       |
+|   9 |       JOIN FILTER CREATE     | :BF0000                     | 49704 |  7523K|       |  3568   (1)| 00:00:01 |       |       |
+|* 10 |        TABLE ACCESS FULL     | LISTINGS                    | 49704 |  7523K|       |  3568   (1)| 00:00:01 |       |       |
+|  11 |       VIEW                   | VW_NSO_1                    |   454K|  5772K|       |  5866   (3)| 00:00:01 |       |       |
+|* 12 |        HASH GROUP BY         |                             |   454K|  9768K|       |  5866   (3)| 00:00:01 |       |       |
+|  13 |         JOIN FILTER USE      | :BF0000                     |   454K|  9768K|       |  5855   (3)| 00:00:01 |       |       |
+|* 14 |          INDEX FAST FULL SCAN| IDX_REVIEWS_LISTING_DATE_V5 |   454K|  9768K|       |  5855   (3)| 00:00:01 |       |       |
+------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("L"."NEIGHBOURHOOD_ID"="N"."NEIGHBOURHOOD_ID")
+   5 - access("L"."LISTING_ID"="SNAP"."LISTING_ID")
+   8 - access("L"."LISTING_ID"="LISTING_ID")
+  10 - filter("L"."ROOM_TYPE"='Entire home/apt')
+  12 - filter(COUNT(*)>20)
+  14 - filter("R"."date">=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

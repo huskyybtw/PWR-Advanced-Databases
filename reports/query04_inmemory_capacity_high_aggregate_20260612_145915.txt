@@ -1,0 +1,49 @@
+=== AGGREGATE REPORT: query04 ===
+Tag: inmemory_capacity_high
+Populations: 1
+Avg Total Duration (s): 0.5548
+Min Duration (s): 0.5548
+Max Duration (s): 0.5548
+Variance Duration: 0.000000
+Avg Cost: 100000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (335)
+
+--- Individual Run Files ---
+- query04_financial_impact_projection_inmemory_capacity_high_run1_20260612_145915.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 963331154
+ 
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                         | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                  |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   1 |  SORT ORDER BY                    |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   2 |   HASH GROUP BY                   |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|*  3 |    HASH JOIN                      |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   4 |     TABLE ACCESS FULL             | NEIGHBOURHOODS          |  2497 |   346K|       |     5   (0)| 00:00:01 |
+|*  5 |     HASH JOIN                     |                         | 46122 |  8422K|  1752K|   100K  (1)| 00:00:04 |
+|   6 |      TABLE ACCESS INMEMORY FULL   | LISTING_SCRAPE_SNAPSHOT | 57786 |  1072K|       |     9  (12)| 00:00:01 |
+|*  7 |      HASH JOIN RIGHT SEMI         |                         | 46121 |  7566K|  1984K| 99572   (1)| 00:00:04 |
+|   8 |       VIEW                        | VW_NSO_1                | 81114 |  1029K|       | 95514   (1)| 00:00:04 |
+|*  9 |        HASH GROUP BY              |                         | 81114 |  1742K|       | 95514   (1)| 00:00:04 |
+|* 10 |         TABLE ACCESS INMEMORY FULL| REVIEWS                 | 81114 |  1742K|       | 95512   (1)| 00:00:04 |
+|* 11 |       TABLE ACCESS INMEMORY FULL  | LISTINGS                | 49704 |  7523K|       |  3568   (1)| 00:00:01 |
+---------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("L"."NEIGHBOURHOOD_ID"="N"."NEIGHBOURHOOD_ID")
+   5 - access("L"."LISTING_ID"="SNAP"."LISTING_ID")
+   7 - access("L"."LISTING_ID"="LISTING_ID")
+   9 - filter(COUNT(*)>20)
+  10 - inmemory("R"."date">=CURRENT_DATE-365)
+       filter("R"."date">=CURRENT_DATE-365)
+  11 - inmemory("L"."ROOM_TYPE"='Entire home/apt')
+       filter("L"."ROOM_TYPE"='Entire home/apt')
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

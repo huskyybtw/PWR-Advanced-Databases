@@ -1,0 +1,76 @@
+=== AGGREGATE REPORT: query01 ===
+Tag: inmemory_capacity_high
+Populations: 1
+Avg Total Duration (s): 0.8966
+Min Duration (s): 0.8966
+Max Duration (s): 0.8966
+Variance Duration: 0.000000
+Avg Cost: 6738000000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (6458)
+
+--- Individual Run Files ---
+- query01_historical_price_fluctuation_inmemory_capacity_high_run1_20260612_145915.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3629504875
+ 
+------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           |    34G|    21T|       |  6738M  (1)| 73:07:16 |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D668C_5FCA45 |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |                           |  2339K|    91M|       |  3923   (3)| 00:00:01 |
+|*  4 |     TABLE ACCESS INMEMORY FULL           | CALENDAR                  |  2339K|    91M|       |  3862   (1)| 00:00:01 |
+|   5 |   SORT ORDER BY                          |                           |    34G|    21T|    23T|  6738M  (1)| 73:07:16 |
+|*  6 |    HASH JOIN                             |                           |    34G|    21T|    69M|  2390K (78)| 00:01:34 |
+|   7 |     VIEW                                 |                           |  2339K|    42M|       | 10738   (1)| 00:00:01 |
+|   8 |      HASH GROUP BY                       |                           |  2339K|   158M|       | 10738   (1)| 00:00:01 |
+|*  9 |       HASH JOIN                          |                           |  2339K|   158M|       | 10676   (1)| 00:00:01 |
+|  10 |        TABLE ACCESS FULL                 | NEIGHBOURHOODS            |  2497 | 64922 |       |     5   (0)| 00:00:01 |
+|* 11 |        HASH JOIN                         |                           |  2339K|   100M|  2360K| 10665   (1)| 00:00:01 |
+|  12 |         TABLE ACCESS INMEMORY FULL       | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
+|  13 |         VIEW                             |                           |  2339K|    42M|       |  3541   (1)| 00:00:01 |
+|  14 |          TABLE ACCESS FULL               | SYS_TEMP_0FD9D668C_5FCA45 |  2339K|    91M|       |  3541   (1)| 00:00:01 |
+|* 15 |     HASH JOIN                            |                           |    11M|  7692M|       |   136K  (1)| 00:00:06 |
+|  16 |      TABLE ACCESS FULL                   | LOCATIONS                 |    41 |  5822 |       |     3   (0)| 00:00:01 |
+|* 17 |      HASH JOIN                           |                           |    11M|  6071M|       |   136K  (1)| 00:00:06 |
+|  18 |       TABLE ACCESS FULL                  | NEIGHBOURHOODS            |  2497 |   377K|       |     5   (0)| 00:00:01 |
+|* 19 |       HASH JOIN                          |                           |    11M|  4302M|    98M|   136K  (1)| 00:00:06 |
+|* 20 |        VIEW                              |                           |  2339K|    71M|       |  3541   (1)| 00:00:01 |
+|  21 |         TABLE ACCESS FULL                | SYS_TEMP_0FD9D668C_5FCA45 |  2339K|    91M|       |  3541   (1)| 00:00:01 |
+|* 22 |        FILTER                            |                           |       |       |       |            |          |
+|* 23 |         HASH JOIN RIGHT OUTER            |                           |   324K|   106M|    14M|   122K  (1)| 00:00:05 |
+|  24 |          VIEW                            |                           |   324K|    10M|       |   115K  (1)| 00:00:05 |
+|  25 |           HASH GROUP BY                  |                           |   324K|  6970K|       |   115K  (1)| 00:00:05 |
+|* 26 |            TABLE ACCESS INMEMORY FULL    | REVIEWS                   |   324K|  6970K|       |   115K  (1)| 00:00:05 |
+|* 27 |          HASH JOIN                       |                           | 63488 |    18M|  8760K|  5353   (1)| 00:00:01 |
+|  28 |           TABLE ACCESS FULL              | HOSTS                     | 58214 |  8072K|       |   819   (1)| 00:00:01 |
+|  29 |           TABLE ACCESS INMEMORY FULL     | LISTINGS                  | 63488 |    10M|       |  3568   (1)| 00:00:01 |
+------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   4 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   6 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
+       filter("CS"."AVG_PRICE_DEC">"CPA"."CITY_AVG_PRICE")
+   9 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  11 - access("L"."LISTING_ID"="CS"."LISTING_ID")
+  15 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
+  17 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  19 - access("CS"."LISTING_ID"="L"."LISTING_ID")
+  20 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
+  22 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
+  23 - access("RS"."LISTING_ID"(+)="L"."LISTING_ID")
+  26 - inmemory("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+  27 - access("H"."HOST_ID"="L"."HOST_ID")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,83 @@
+Query Name: query02_superhost_portfolio_analysis
+Tag: inmemory_query_low
+Run Index: 1
+SQL File: query02_superhost_portfolio_analysis.sql
+Statement Type: SELECT
+Started At: 2026-06-12T14:50:58.716487
+Execution Duration (s): 0.7235
+Fetch Duration (s): 0.0022
+Total Duration (s): 0.7257
+Rows Impacted: 279
+Result Signature: 5c94dd4a5583505928c98adda9dc81c838cbdd5fe76ea926e1135e47b2303e40
+-- SQL --
+SELECT
+    h.host_name,
+    h.host_total_listings_count,
+    COUNT(DISTINCT lst.neighbourhood_id) AS neighbourhoods_covered,
+    COUNT(r.review_id) AS total_reviews_received,
+    MAX(r."date") AS last_review_date
+FROM hosts h
+JOIN listings lst ON h.host_id = lst.host_id
+LEFT JOIN reviews r ON lst.listing_id = r.listing_id
+WHERE h.host_is_superhost = 1
+  AND h.host_response_time IN ('within an hour', 'within a few hours')
+  AND lst.instant_bookable = 1
+  AND h.host_id IN (
+      SELECT host_id
+      FROM listings
+      WHERE property_type NOT LIKE '%Shared%'
+      GROUP BY host_id
+      HAVING COUNT(DISTINCT neighbourhood_id) >= 2
+         AND COUNT(listing_id) >= 3
+  )
+GROUP BY h.host_id, h.host_name, h.host_total_listings_count
+HAVING COUNT(r.review_id) > 50
+ORDER BY total_reviews_received DESC
+-- Estimated Execution Plan --
+Plan hash value: 3596612296
+ 
+-------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name     | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |          |  2911 |   540K|       |   254K  (1)| 00:00:10 |
+|   1 |  SORT ORDER BY                           |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
+|*  2 |   FILTER                                 |          |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
+|   4 |     VIEW                                 | VW_DAG_1 |  4145K|   751M|       |   133K  (1)| 00:00:06 |
+|   5 |      HASH GROUP BY                       |          |  4145K|  1569M|       |   133K  (1)| 00:00:06 |
+|*  6 |       HASH JOIN OUTER                    |          |  4145K|  1569M|  5880K|   133K  (1)| 00:00:06 |
+|   7 |        JOIN FILTER CREATE                | :BF0000  | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+|*  8 |         HASH JOIN                        |          | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+|*  9 |          TABLE ACCESS INMEMORY FULL      | LISTINGS | 16081 |   816K|       |  3568   (1)| 00:00:01 |
+|* 10 |          HASH JOIN RIGHT SEMI            |          | 15750 |  4768K|  1552K|  4696   (1)| 00:00:01 |
+|  11 |           VIEW                           | VW_NSO_1 | 63488 |   806K|       |  3570   (1)| 00:00:01 |
+|* 12 |            FILTER                        |          |       |       |       |            |          |
+|  13 |             HASH GROUP BY                |          | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  14 |              VIEW                        | VW_DAG_0 | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  15 |               HASH GROUP BY              |          | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
+|* 16 |                TABLE ACCESS INMEMORY FULL| LISTINGS | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
+|* 17 |           TABLE ACCESS FULL              | HOSTS    | 15750 |  4568K|       |   819   (1)| 00:00:01 |
+|  18 |        JOIN FILTER USE                   | :BF0000  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
+|* 19 |         TABLE ACCESS INMEMORY FULL       | REVIEWS  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
+-------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter(NVL(SUM("ITEM_5"),0)>50)
+   6 - access("LST"."LISTING_ID"="R"."LISTING_ID"(+))
+   8 - access("H"."HOST_ID"="LST"."HOST_ID")
+   9 - inmemory("LST"."INSTANT_BOOKABLE"=1)
+       filter("LST"."INSTANT_BOOKABLE"=1)
+  10 - access("H"."HOST_ID"="HOST_ID")
+  12 - filter(COUNT("ITEM_1")>=2 AND NVL(SUM("ITEM_3"),0)>=3)
+  16 - inmemory("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+       filter("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+  17 - filter("H"."HOST_IS_SUPERHOST"=1 AND ("H"."HOST_RESPONSE_TIME"='within a few hours' OR 
+              "H"."HOST_RESPONSE_TIME"='within an hour'))
+  19 - inmemory(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
+       filter(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,62 @@
+=== AGGREGATE REPORT: query07 ===
+Tag: partition_list_year
+Populations: 3
+Avg Total Duration (s): 0.0509
+Min Duration (s): 0.0471
+Max Duration (s): 0.0557
+Variance Duration: 0.000019
+Avg Cost: 121000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (0)
+
+--- Individual Run Files ---
+- query07_massive_cascade_purge_partition_list_year_run1_20260522_184124.txt
+- query07_massive_cascade_purge_partition_list_year_run2_20260522_184124.txt
+- query07_massive_cascade_purge_partition_list_year_run3_20260522_184124.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3289117300
+ 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                        | Name                           | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT                                 |                                |   189 | 13230 |       |   121K  (1)| 00:00:05 |       |       |
+|   1 |  DELETE                                          | CALENDAR                       |       |       |       |            |          |       |       |
+|*  2 |   HASH JOIN SEMI                                 |                                |   189 | 13230 |       |   121K  (1)| 00:00:05 |       |       |
+|*  3 |    TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED    | CALENDAR                       |   189 | 10773 |       |    40   (0)| 00:00:01 | ROWID | ROWID |
+|*  4 |     INDEX RANGE SCAN                             | IDX_CALENDAR_TRUNC_DATE_FBI_V7 |   189 |       |       |     3   (0)| 00:00:01 |       |       |
+|   5 |    VIEW                                          | VW_NSO_1                       |   313K|  3980K|       |   121K  (1)| 00:00:05 |       |       |
+|*  6 |     FILTER                                       |                                |       |       |       |            |          |       |       |
+|   7 |      SORT GROUP BY                               |                                |   313K|    51M|       |   121K  (1)| 00:00:05 |       |       |
+|*  8 |       HASH JOIN RIGHT OUTER                      |                                |   313K|    51M|       |   121K  (1)| 00:00:05 |       |       |
+|*  9 |        TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED| CALENDAR                       |    54 |  3078 |       |    40   (0)| 00:00:01 | ROWID | ROWID |
+|* 10 |         INDEX RANGE SCAN                         | IDX_CALENDAR_TRUNC_DATE_FBI_V7 |   189 |       |       |     3   (0)| 00:00:01 |       |       |
+|* 11 |        HASH JOIN OUTER                           |                                |   313K|    34M|  5704K|   121K  (1)| 00:00:05 |       |       |
+|* 12 |         HASH JOIN RIGHT OUTER                    |                                | 63488 |  4960K|  2264K|  5084   (1)| 00:00:01 |       |       |
+|* 13 |          TABLE ACCESS FULL                       | LISTING_SCRAPE_SNAPSHOT        | 57786 |  1580K|       |   206   (1)| 00:00:01 |       |       |
+|* 14 |          HASH JOIN                               |                                | 63487 |  3223K|  1520K|  4576   (1)| 00:00:01 |       |       |
+|* 15 |           TABLE ACCESS FULL                      | HOSTS                          | 40884 |  1038K|       |   819   (1)| 00:00:01 |       |       |
+|  16 |           TABLE ACCESS FULL                      | LISTINGS                       | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+|* 17 |         TABLE ACCESS FULL                        | REVIEWS                        |   250K|  8548K|       |   115K  (1)| 00:00:05 |       |       |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   3 - filter("C"."date"<CURRENT_DATE-365)
+   4 - access(TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(CURRENT_DATE-365))
+   6 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+   8 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+   9 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+  10 - access("C_RECENT"."SYS_NC00009$"(+)>=TRUNC(CURRENT_DATE-30) AND "C_RECENT"."SYS_NC00009$"(+)<=TRUNC(CURRENT_DATE))
+  11 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+  12 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+  13 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+  14 - access("L"."HOST_ID"="H"."HOST_ID")
+  15 - filter("H"."HOST_IS_SUPERHOST"=0)
+  17 - filter("R"."date"(+)>=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

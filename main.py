@@ -1,7 +1,13 @@
 import argparse
 from scripts.seed import run_seed
 from scripts.benchmarks.runner import run_all as run_all_benchmarks, run_query
-from scripts.db import get_experimental_index_files, execute_ddl_script
+from scripts.db import (
+    create_schema_backup,
+    execute_ddl_script,
+    get_experimental_index_files,
+    restore_schema_backup,
+    wait_for_inmemory_population
+)
 
 """
 === EXPERIMENTAL INDEXING PIPELINE ===
@@ -82,9 +88,15 @@ def main():
         run_seed()
     elif args.benchmark or args.benchmark_all:
         v_file, u_file = get_experimental_index_files(args.tag)
+        recovery_backup = None
         if v_file:
+            print(
+                f"Creating recovery backup before applying experimental tag '{args.tag}'..."
+            )
+            recovery_backup = create_schema_backup(prefix=f"{args.tag}_before")
             print(f"Applying experimental index for tag '{args.tag}'...")
             execute_ddl_script(v_file)
+            # wait_for_inmemory_population()
 
         try:
             if args.benchmark:
@@ -102,6 +114,9 @@ def main():
             if u_file:
                 print(f"Reverting experimental index for tag '{args.tag}'...")
                 execute_ddl_script(u_file)
+            # if recovery_backup:
+            #     print("Restoring database from the pre-experiment backup...")
+            #     restore_schema_backup(recovery_backup)
     else:
         parser.print_help()
 

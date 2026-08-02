@@ -1,0 +1,68 @@
+Query Name: query04_financial_impact_projection
+Tag: inmemory_capacity_high
+Run Index: 1
+SQL File: query04_financial_impact_projection.sql
+Statement Type: SELECT
+Started At: 2026-06-12T14:59:19.492122
+Execution Duration (s): 0.5520
+Fetch Duration (s): 0.0028
+Total Duration (s): 0.5548
+Rows Impacted: 335
+Result Signature: f25383f97d761b379e5505b5be75166de503427fc9325814a73d2adc05885868
+-- SQL --
+SELECT
+    n.neighbourhood,
+    COUNT(l.listing_id) AS premium_properties_count,
+    ROUND(AVG(snap.price), 2) AS current_avg_price,
+    ROUND(AVG(snap.price * 1.15), 2) AS projected_avg_price,
+    SUM(snap.price * 30) AS current_max_monthly_revenue,
+    SUM((snap.price * 1.15) * 30) AS projected_max_monthly_revenue,
+    SUM((snap.price * 0.15) * 30) AS neighbourhood_monthly_profit_gain
+FROM listings l
+JOIN neighbourhoods n ON l.neighbourhood_id = n.neighbourhood_id
+JOIN listing_scrape_snapshot snap ON l.listing_id = snap.listing_id
+WHERE l.room_type = 'Entire home/apt'
+  AND l.listing_id IN (
+      SELECT r.listing_id
+      FROM reviews r
+      WHERE r."date" >= CURRENT_DATE - 365
+      GROUP BY r.listing_id
+      HAVING COUNT(r.review_id) > 20
+  )
+GROUP BY n.neighbourhood
+ORDER BY neighbourhood_monthly_profit_gain DESC
+-- Estimated Execution Plan --
+Plan hash value: 963331154
+ 
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                         | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                  |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   1 |  SORT ORDER BY                    |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   2 |   HASH GROUP BY                   |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|*  3 |    HASH JOIN                      |                         | 46122 |    14M|       |   100K  (1)| 00:00:04 |
+|   4 |     TABLE ACCESS FULL             | NEIGHBOURHOODS          |  2497 |   346K|       |     5   (0)| 00:00:01 |
+|*  5 |     HASH JOIN                     |                         | 46122 |  8422K|  1752K|   100K  (1)| 00:00:04 |
+|   6 |      TABLE ACCESS INMEMORY FULL   | LISTING_SCRAPE_SNAPSHOT | 57786 |  1072K|       |     9  (12)| 00:00:01 |
+|*  7 |      HASH JOIN RIGHT SEMI         |                         | 46121 |  7566K|  1984K| 99572   (1)| 00:00:04 |
+|   8 |       VIEW                        | VW_NSO_1                | 81114 |  1029K|       | 95514   (1)| 00:00:04 |
+|*  9 |        HASH GROUP BY              |                         | 81114 |  1742K|       | 95514   (1)| 00:00:04 |
+|* 10 |         TABLE ACCESS INMEMORY FULL| REVIEWS                 | 81114 |  1742K|       | 95512   (1)| 00:00:04 |
+|* 11 |       TABLE ACCESS INMEMORY FULL  | LISTINGS                | 49704 |  7523K|       |  3568   (1)| 00:00:01 |
+---------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("L"."NEIGHBOURHOOD_ID"="N"."NEIGHBOURHOOD_ID")
+   5 - access("L"."LISTING_ID"="SNAP"."LISTING_ID")
+   7 - access("L"."LISTING_ID"="LISTING_ID")
+   9 - filter(COUNT(*)>20)
+  10 - inmemory("R"."date">=CURRENT_DATE-365)
+       filter("R"."date">=CURRENT_DATE-365)
+  11 - inmemory("L"."ROOM_TYPE"='Entire home/apt')
+       filter("L"."ROOM_TYPE"='Entire home/apt')
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,134 @@
+Query Name: query03_potential_monthly_revenue
+Tag: inmemory_capacity_high
+Run Index: 1
+SQL File: query03_potential_monthly_revenue.sql
+Statement Type: SELECT
+Started At: 2026-06-12T14:59:17.741714
+Execution Duration (s): 1.4530
+Fetch Duration (s): 0.0075
+Total Duration (s): 1.4605
+Rows Impacted: 873
+Result Signature: 0d82a330bcd3dcdf72ba2042f183431a79b84af4a67771f9547749edd6e0845e
+-- SQL --
+WITH
+    host_listing_stats AS (
+        SELECT
+            l.host_id,
+            COUNT(DISTINCT l.listing_id) AS listings_cnt,
+            COUNT(DISTINCT l.neighbourhood_id) AS neighbourhoods_cnt
+        FROM listings l
+        GROUP BY
+            l.host_id
+    ),
+    host_review_stats AS (
+        SELECT l.host_id, COUNT(r.review_id) AS total_reviews
+        FROM listings l
+            JOIN reviews r ON r.listing_id = l.listing_id
+        GROUP BY
+            l.host_id
+    ),
+    host_price_stats AS (
+        SELECT l.host_id, AVG(c.price) AS avg_price
+        FROM listings l
+            JOIN calendar c ON c.listing_id = l.listing_id
+        WHERE
+            c."date" >= DATE '2025-12-01'
+            AND c."date" < DATE '2026-01-01'
+        GROUP BY
+            l.host_id
+    )
+SELECT
+    h.host_id,
+    h.host_name,
+    h.host_since,
+    h.host_is_superhost,
+    hls.listings_cnt,
+    hls.neighbourhoods_cnt,
+    hrs.total_reviews,
+    hps.avg_price,
+    DENSE_RANK() OVER (
+        ORDER BY hrs.total_reviews DESC, hps.avg_price DESC
+    ) AS host_rank
+FROM
+    hosts h
+    JOIN host_listing_stats hls ON hls.host_id = h.host_id
+    JOIN host_review_stats hrs ON hrs.host_id = h.host_id
+    JOIN host_price_stats hps ON hps.host_id = h.host_id
+WHERE
+    hls.listings_cnt >= 3
+    AND hls.neighbourhoods_cnt >= 2
+    AND hrs.total_reviews > (
+        SELECT AVG(total_reviews)
+        FROM host_review_stats
+    )
+ORDER BY host_rank
+-- Estimated Execution Plan --
+Plan hash value: 724558460
+ 
+------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           |   181M|    41G|       |   181K  (1)| 00:00:08 |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6690_5FCA45 |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |                           |  4130K|   204M|       |   119K  (1)| 00:00:05 |
+|   4 |     MERGE JOIN                           |                           |  4130K|   204M|       |   119K  (1)| 00:00:05 |
+|   5 |      SORT JOIN                           |                           |  4130K|   102M|       |   115K  (1)| 00:00:05 |
+|   6 |       VIEW                               | VW_GBF_8                  |  4130K|   102M|       |   115K  (1)| 00:00:05 |
+|   7 |        HASH GROUP BY                     |                           |  4130K|    51M|       |   115K  (1)| 00:00:05 |
+|   8 |         TABLE ACCESS INMEMORY FULL       | REVIEWS                   |  4130K|    51M|       |   115K  (1)| 00:00:05 |
+|*  9 |      SORT JOIN                           |                           | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
+|  10 |       TABLE ACCESS INMEMORY FULL         | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
+|  11 |   WINDOW SORT                            |                           |   181M|    41G|       | 62000   (2)| 00:00:03 |
+|  12 |    MERGE JOIN                            |                           |   181M|    41G|       | 54084   (2)| 00:00:03 |
+|  13 |     MERGE JOIN                           |                           |  2551K|   540M|       | 15158   (2)| 00:00:01 |
+|  14 |      MERGE JOIN                          |                           |  2339K|   408M|       | 10949   (2)| 00:00:01 |
+|  15 |       SORT JOIN                          |                           |  2339K|    42M|       |  8025   (2)| 00:00:01 |
+|  16 |        VIEW                              |                           |  2339K|    42M|       |  8025   (2)| 00:00:01 |
+|  17 |         HASH GROUP BY                    |                           |  2339K|   129M|       |  8025   (2)| 00:00:01 |
+|  18 |          MERGE JOIN                      |                           |  2339K|   129M|       |  7963   (2)| 00:00:01 |
+|  19 |           SORT JOIN                      |                           |  2339K|    71M|       |  3923   (3)| 00:00:01 |
+|  20 |            VIEW                          | VW_GBC_14                 |  2339K|    71M|       |  3923   (3)| 00:00:01 |
+|  21 |             HASH GROUP BY                |                           |  2339K|    62M|       |  3923   (3)| 00:00:01 |
+|* 22 |              TABLE ACCESS INMEMORY FULL  | CALENDAR                  |  2339K|    62M|       |  3862   (1)| 00:00:01 |
+|* 23 |           SORT JOIN                      |                           | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
+|  24 |            TABLE ACCESS INMEMORY FULL    | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
+|* 25 |       SORT JOIN                          |                           | 58214 |  9323K|    19M|  2924   (1)| 00:00:01 |
+|  26 |        TABLE ACCESS FULL                 | HOSTS                     | 58214 |  9323K|       |   819   (1)| 00:00:01 |
+|* 27 |      SORT JOIN                           |                           | 63488 |  2418K|  6488K|  4209   (1)| 00:00:01 |
+|  28 |       VIEW                               |                           | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|* 29 |        FILTER                            |                           |       |       |       |            |          |
+|  30 |         HASH GROUP BY                    |                           | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  31 |          TABLE ACCESS INMEMORY FULL      | LISTINGS                  | 63488 |  2418K|       |  3568   (1)| 00:00:01 |
+|* 32 |     SORT JOIN                            |                           |  4130K|   102M|   285M| 38446   (1)| 00:00:02 |
+|* 33 |      VIEW                                |                           |  4130K|   102M|       |  7916   (1)| 00:00:01 |
+|  34 |       TABLE ACCESS FULL                  | SYS_TEMP_0FD9D6690_5FCA45 |  4130K|   102M|       |  7916   (1)| 00:00:01 |
+|  35 |       SORT AGGREGATE                     |                           |     1 |    13 |       |            |          |
+|  36 |        VIEW                              |                           |  4130K|    51M|       |  7916   (1)| 00:00:01 |
+|  37 |         TABLE ACCESS FULL                | SYS_TEMP_0FD9D6690_5FCA45 |  4130K|   102M|       |  7916   (1)| 00:00:01 |
+------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   9 - access("ITEM_1"="L"."LISTING_ID")
+       filter("ITEM_1"="L"."LISTING_ID")
+  22 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+  23 - access("ITEM_1"="L"."LISTING_ID")
+       filter("ITEM_1"="L"."LISTING_ID")
+  25 - access("HPS"."HOST_ID"="H"."HOST_ID")
+       filter("HPS"."HOST_ID"="H"."HOST_ID")
+  27 - access("HLS"."HOST_ID"="H"."HOST_ID")
+       filter("HLS"."HOST_ID"="H"."HOST_ID")
+  29 - filter(COUNT(DISTINCT "L"."LISTING_ID")>=3 AND COUNT(DISTINCT "L"."NEIGHBOURHOOD_ID")>=2)
+  32 - access("HRS"."HOST_ID"="H"."HOST_ID")
+       filter("HRS"."HOST_ID"="H"."HOST_ID")
+  33 - filter("HRS"."TOTAL_REVIEWS"> (SELECT SUM("TOTAL_REVIEWS")/COUNT("TOTAL_REVIEWS") FROM  (SELECT /*+ CACHE 
+              ("T1") */ "C0" "HOST_ID","C1" "TOTAL_REVIEWS" FROM "SYS"."SYS_TEMP_0FD9D6690_5FCA45" "T1") "HOST_REVIEW_STATS"))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,63 @@
+=== AGGREGATE REPORT: query07 ===
+Tag: inmemory_query_low
+Populations: 1
+Avg Total Duration (s): 0.0579
+Min Duration (s): 0.0579
+Max Duration (s): 0.0579
+Variance Duration: 0.000000
+Avg Cost: 121000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (0)
+
+--- Individual Run Files ---
+- query07_massive_cascade_purge_inmemory_query_low_run1_20260612_145057.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 1011635010
+ 
+-----------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT                    |                         |   156 |  9516 |       |   121K  (1)| 00:00:05 |
+|   1 |  DELETE                             | CALENDAR                |       |       |       |            |          |
+|*  2 |   HASH JOIN SEMI                    |                         |   156 |  9516 |       |   121K  (1)| 00:00:05 |
+|*  3 |    TABLE ACCESS INMEMORY FULL       | CALENDAR                |   156 |  7488 |       |   224  (36)| 00:00:01 |
+|   4 |    VIEW                             | VW_NSO_1                |   272K|  3465K|       |   121K  (1)| 00:00:05 |
+|*  5 |     FILTER                          |                         |       |       |       |            |          |
+|   6 |      SORT GROUP BY                  |                         |   272K|    42M|       |   121K  (1)| 00:00:05 |
+|*  7 |       HASH JOIN RIGHT OUTER         |                         |   272K|    42M|       |   121K  (1)| 00:00:05 |
+|*  8 |        TABLE ACCESS INMEMORY FULL   | CALENDAR                |    58 |  2784 |       |   167  (14)| 00:00:01 |
+|*  9 |        HASH JOIN OUTER              |                         |   272K|    29M|  5704K|   121K  (1)| 00:00:05 |
+|* 10 |         HASH JOIN RIGHT OUTER       |                         | 63487 |  4959K|  2360K|  4852   (1)| 00:00:01 |
+|* 11 |          TABLE ACCESS INMEMORY FULL | LISTING_SCRAPE_SNAPSHOT | 60267 |  1647K|       |    11  (28)| 00:00:01 |
+|* 12 |          HASH JOIN                  |                         | 63487 |  3223K|  1520K|  4534   (1)| 00:00:01 |
+|* 13 |           TABLE ACCESS FULL         | HOSTS                   | 40884 |  1038K|       |   819   (1)| 00:00:01 |
+|  14 |           TABLE ACCESS INMEMORY FULL| LISTINGS                | 63488 |  1612K|       |  3526   (1)| 00:00:01 |
+|* 15 |         TABLE ACCESS INMEMORY FULL  | REVIEWS                 |   209K|  7162K|       |   115K  (1)| 00:00:05 |
+-----------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   3 - inmemory("C"."date"<CURRENT_DATE-365)
+       filter("C"."date"<CURRENT_DATE-365)
+   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
+              MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+   7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+   8 - inmemory("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
+              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+       filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
+              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+   9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+  10 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+  11 - inmemory("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+       filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+  12 - access("L"."HOST_ID"="H"."HOST_ID")
+  13 - filter("H"."HOST_IS_SUPERHOST"=0)
+  15 - inmemory("R"."date"(+)>=CURRENT_DATE-365)
+       filter("R"."date"(+)>=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

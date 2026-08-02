@@ -1,0 +1,80 @@
+Query Name: query07_massive_cascade_purge
+Tag: inmemory_capacity_high
+Run Index: 1
+SQL File: query07_massive_cascade_purge.sql
+Statement Type: DELETE
+Started At: 2026-06-12T14:59:22.118863
+Execution Duration (s): 0.3195
+Fetch Duration (s): 0.0000
+Total Duration (s): 0.3195
+Rows Impacted: 0
+Result Signature: ROWS:0
+-- SQL --
+DELETE FROM calendar c
+WHERE c."date" < CURRENT_DATE - 365
+  AND c.listing_id IN (
+      SELECT l.listing_id
+      FROM listings l
+      JOIN hosts h ON l.host_id = h.host_id
+      LEFT JOIN reviews r ON l.listing_id = r.listing_id
+        AND r."date" >= CURRENT_DATE - 365
+      LEFT JOIN calendar c_recent ON l.listing_id = c_recent.listing_id
+        AND c_recent."date" BETWEEN CURRENT_DATE - 30 AND CURRENT_DATE
+        AND c_recent.available = 0
+      LEFT JOIN listing_scrape_snapshot snap ON l.listing_id = snap.listing_id
+        AND snap.scraped_at >= CURRENT_DATE - 365
+      WHERE h.host_is_superhost = 0
+      GROUP BY l.listing_id
+      HAVING COUNT(r.review_id) = 0
+         AND COUNT(c_recent.calendar_id) = 0
+         AND MAX(snap.price) = MIN(snap.price)
+  )
+-- Estimated Execution Plan --
+Plan hash value: 1011635010
+ 
+-----------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT                    |                         |   156 |  9516 |       | 35060   (2)| 00:00:02 |
+|   1 |  DELETE                             | CALENDAR                |       |       |       |            |          |
+|*  2 |   HASH JOIN SEMI                    |                         |   156 |  9516 |       | 35060   (2)| 00:00:02 |
+|*  3 |    TABLE ACCESS INMEMORY FULL       | CALENDAR                |   156 |  7488 |       |  3919   (2)| 00:00:01 |
+|   4 |    VIEW                             | VW_NSO_1                |   272K|  3465K|       | 31140   (2)| 00:00:02 |
+|*  5 |     FILTER                          |                         |       |       |       |            |          |
+|   6 |      SORT GROUP BY                  |                         |   272K|    42M|       | 31140   (2)| 00:00:02 |
+|*  7 |       HASH JOIN RIGHT OUTER         |                         |   272K|    42M|       | 31133   (2)| 00:00:02 |
+|*  8 |        TABLE ACCESS INMEMORY FULL   | CALENDAR                |    58 |  2784 |       |  3861   (1)| 00:00:01 |
+|*  9 |        HASH JOIN OUTER              |                         |   272K|    29M|  5704K| 27271   (2)| 00:00:02 |
+|* 10 |         HASH JOIN RIGHT OUTER       |                         | 63487 |  4959K|  2360K|  1468   (2)| 00:00:01 |
+|* 11 |          TABLE ACCESS INMEMORY FULL | LISTING_SCRAPE_SNAPSHOT | 60267 |  1647K|       |    11  (28)| 00:00:01 |
+|* 12 |          HASH JOIN                  |                         | 63487 |  3223K|  1520K|  1149   (1)| 00:00:01 |
+|* 13 |           TABLE ACCESS FULL         | HOSTS                   | 40884 |  1038K|       |   819   (1)| 00:00:01 |
+|  14 |           TABLE ACCESS INMEMORY FULL| LISTINGS                | 63488 |  1612K|       |   141   (7)| 00:00:01 |
+|* 15 |         TABLE ACCESS INMEMORY FULL  | REVIEWS                 |   209K|  7162K|       | 25060   (2)| 00:00:01 |
+-----------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   3 - inmemory("C"."date"<CURRENT_DATE-365)
+       filter("C"."date"<CURRENT_DATE-365)
+   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND 
+              MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+   7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+   8 - inmemory("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
+              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+       filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND 
+              "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+   9 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+  10 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+  11 - inmemory("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+       filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+  12 - access("L"."HOST_ID"="H"."HOST_ID")
+  13 - filter("H"."HOST_IS_SUPERHOST"=0)
+  15 - inmemory("R"."date"(+)>=CURRENT_DATE-365)
+       filter("R"."date"(+)>=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

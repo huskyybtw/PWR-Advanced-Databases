@@ -1,0 +1,60 @@
+Query Name: query06_dynamic_calendar_blocking
+Tag: inmemory_query_low
+Run Index: 1
+SQL File: query06_dynamic_calendar_blocking.sql
+Statement Type: UPDATE
+Started At: 2026-06-12T14:51:03.216796
+Execution Duration (s): 0.0108
+Fetch Duration (s): 0.0000
+Total Duration (s): 0.0108
+Rows Impacted: 0
+Result Signature: ROWS:0
+-- SQL --
+UPDATE calendar c
+SET c.available = 0
+WHERE c."date" BETWEEN CURRENT_DATE AND CURRENT_DATE + 30
+  AND c.listing_id IN (
+      SELECT lst.listing_id
+      FROM listings lst
+      JOIN listing_scrape_snapshot snap ON lst.listing_id = snap.listing_id
+      WHERE snap.price < 20
+        AND NOT EXISTS (
+            SELECT 1
+            FROM reviews r
+            WHERE r.listing_id = lst.listing_id
+              AND r."date" >= CURRENT_DATE - 365
+        )
+  )
+-- Estimated Execution Plan --
+Plan hash value: 3712227048
+ 
+-----------------------------------------------------------------------------------------------------------
+| Id  | Operation                       | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------------------------------
+|   0 | UPDATE STATEMENT                |                         |     2 |    96 |   115K  (1)| 00:00:05 |
+|   1 |  UPDATE                         | CALENDAR                |       |       |            |          |
+|*  2 |   HASH JOIN SEMI                |                         |     2 |    96 |   115K  (1)| 00:00:05 |
+|*  3 |    TABLE ACCESS INMEMORY FULL   | CALENDAR                |   156 |  5460 |   196  (27)| 00:00:01 |
+|   4 |    VIEW                         | VW_NSO_1                |     2 |    26 |   115K  (1)| 00:00:05 |
+|*  5 |     FILTER                      |                         |       |       |            |          |
+|*  6 |      HASH JOIN ANTI             |                         |     2 |    82 |   115K  (1)| 00:00:05 |
+|*  7 |       TABLE ACCESS INMEMORY FULL| LISTING_SCRAPE_SNAPSHOT |    71 |  1349 |     9  (12)| 00:00:01 |
+|*  8 |       TABLE ACCESS INMEMORY FULL| REVIEWS                 |   209K|  4501K|   115K  (1)| 00:00:05 |
+-----------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("C"."LISTING_ID"="LISTING_ID")
+   3 - inmemory("C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
+       filter("C"."date">=CURRENT_DATE AND "C"."date"<=CURRENT_DATE+30)
+   5 - filter(CURRENT_DATE+30>=CURRENT_DATE)
+   6 - access("R"."LISTING_ID"="SNAP"."LISTING_ID")
+   7 - inmemory("SNAP"."PRICE"<2.0E+001D)
+       filter("SNAP"."PRICE"<2.0E+001D)
+   8 - inmemory("R"."date">=CURRENT_DATE-365)
+       filter("R"."date">=CURRENT_DATE-365)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

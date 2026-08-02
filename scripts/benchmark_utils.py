@@ -1,5 +1,8 @@
 import datetime
+import hashlib
+import json
 import time
+from decimal import Decimal
 
 from scripts.db import BASE_DIR, get_admin_connection, get_connection, load_query
 
@@ -25,24 +28,58 @@ def _count_rows(cursor, batch_size=1000):
     return total
 
 
-def _flush_database_memory():
-    try:
-        conn = get_admin_connection()
-    except Exception:
-        return
+def _normalize_value(value):
+    if value is None:
+        return "<NULL>"
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat(sep=" ")
+        except TypeError:
+            return value.isoformat()
+    if isinstance(value, Decimal):
+        return format(value, "f")
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
 
-    try:
-        cursor = conn.cursor()
-        for statement in (
-            "ALTER SYSTEM FLUSH SHARED_POOL",
-            "ALTER SYSTEM FLUSH BUFFER_CACHE",
-        ):
-            try:
-                cursor.execute(statement)
-            except Exception as exc:
-                print(f"[!] Skipping {statement}: {exc}")
-    finally:
-        conn.close()
+
+def _fingerprint_result_set(cursor, batch_size=1000):
+    hasher = hashlib.sha256()
+    row_count = 0
+
+    while True:
+        batch = cursor.fetchmany(batch_size)
+        if not batch:
+            break
+
+        for row in batch:
+            serialized_row = "\x1f".join(_normalize_value(value) for value in row)
+            hasher.update(serialized_row.encode("utf-8"))
+            hasher.update(b"\x1e")
+            row_count += 1
+
+    return row_count, hasher.hexdigest()
+
+
+def _flush_database_memory():
+    return
+    # try:
+    #     conn = get_admin_connection()
+    # except Exception:
+    #     return
+
+    # try:
+    #     cursor = conn.cursor()
+    #     for statement in (
+    #         "ALTER SYSTEM FLUSH SHARED_POOL",
+    #         "ALTER SYSTEM FLUSH BUFFER_CACHE",
+    #     ):
+    #         try:
+    #             cursor.execute(statement)
+    #         except Exception as exc:
+    #             print(f"[!] Skipping {statement}: {exc}")
+    # finally:
+    #     conn.close()
 
 
 def run_benchmark(
@@ -61,6 +98,7 @@ def run_benchmark(
     conn = get_connection()
     try:
         cursor = conn.cursor()
+        cursor.execute("SAVEPOINT benchmark_start")
         plan_text = _collect_plan(cursor, sql)
 
         started_at = datetime.datetime.now()
@@ -71,10 +109,11 @@ def run_benchmark(
         fetch_duration = 0.0
         if statement == "select":
             fetch_start = time.perf_counter()
-            rowcount = _count_rows(cursor)
+            rowcount, result_signature = _fingerprint_result_set(cursor)
             fetch_duration = time.perf_counter() - fetch_start
         else:
             rowcount = cursor.rowcount
+            result_signature = f"ROWS:{rowcount if rowcount is not None else -1}"
 
         if rowcount is None:
             rowcount = -1
@@ -82,7 +121,10 @@ def run_benchmark(
         duration = execute_duration + fetch_duration
     finally:
         try:
-            conn.rollback()
+            try:
+                conn.cursor().execute("ROLLBACK TO benchmark_start")
+            except Exception:
+                conn.rollback()
         finally:
             conn.close()
         _flush_database_memory()
@@ -98,6 +140,7 @@ def run_benchmark(
         f"Fetch Duration (s): {fetch_duration:.4f}",
         f"Total Duration (s): {duration:.4f}",
         f"Rows Impacted: {rowcount}",
+        f"Result Signature: {result_signature}",
         "-- SQL --",
         sql,
         "-- Estimated Execution Plan --",

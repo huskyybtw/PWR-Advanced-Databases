@@ -1,0 +1,62 @@
+=== AGGREGATE REPORT: query02 ===
+Tag: inmemory_query_low
+Populations: 1
+Avg Total Duration (s): 0.7257
+Min Duration (s): 0.7257
+Max Duration (s): 0.7257
+Variance Duration: 0.000000
+Avg Cost: 254000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (279)
+
+--- Individual Run Files ---
+- query02_superhost_portfolio_analysis_inmemory_query_low_run1_20260612_145057.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3596612296
+ 
+-------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name     | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |          |  2911 |   540K|       |   254K  (1)| 00:00:10 |
+|   1 |  SORT ORDER BY                           |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
+|*  2 |   FILTER                                 |          |       |       |       |            |          |
+|   3 |    HASH GROUP BY                         |          |  2911 |   540K|   830M|   254K  (1)| 00:00:10 |
+|   4 |     VIEW                                 | VW_DAG_1 |  4145K|   751M|       |   133K  (1)| 00:00:06 |
+|   5 |      HASH GROUP BY                       |          |  4145K|  1569M|       |   133K  (1)| 00:00:06 |
+|*  6 |       HASH JOIN OUTER                    |          |  4145K|  1569M|  5880K|   133K  (1)| 00:00:06 |
+|   7 |        JOIN FILTER CREATE                | :BF0000  | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+|*  8 |         HASH JOIN                        |          | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+|*  9 |          TABLE ACCESS INMEMORY FULL      | LISTINGS | 16081 |   816K|       |  3568   (1)| 00:00:01 |
+|* 10 |          HASH JOIN RIGHT SEMI            |          | 15750 |  4768K|  1552K|  4696   (1)| 00:00:01 |
+|  11 |           VIEW                           | VW_NSO_1 | 63488 |   806K|       |  3570   (1)| 00:00:01 |
+|* 12 |            FILTER                        |          |       |       |       |            |          |
+|  13 |             HASH GROUP BY                |          | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  14 |              VIEW                        | VW_DAG_0 | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  15 |               HASH GROUP BY              |          | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
+|* 16 |                TABLE ACCESS INMEMORY FULL| LISTINGS | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
+|* 17 |           TABLE ACCESS FULL              | HOSTS    | 15750 |  4568K|       |   819   (1)| 00:00:01 |
+|  18 |        JOIN FILTER USE                   | :BF0000  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
+|* 19 |         TABLE ACCESS INMEMORY FULL       | REVIEWS  |  4130K|   137M|       |   115K  (1)| 00:00:05 |
+-------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter(NVL(SUM("ITEM_5"),0)>50)
+   6 - access("LST"."LISTING_ID"="R"."LISTING_ID"(+))
+   8 - access("H"."HOST_ID"="LST"."HOST_ID")
+   9 - inmemory("LST"."INSTANT_BOOKABLE"=1)
+       filter("LST"."INSTANT_BOOKABLE"=1)
+  10 - access("H"."HOST_ID"="HOST_ID")
+  12 - filter(COUNT("ITEM_1")>=2 AND NVL(SUM("ITEM_3"),0)>=3)
+  16 - inmemory("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+       filter("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+  17 - filter("H"."HOST_IS_SUPERHOST"=1 AND ("H"."HOST_RESPONSE_TIME"='within a few hours' OR 
+              "H"."HOST_RESPONSE_TIME"='within an hour'))
+  19 - inmemory(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
+       filter(SYS_OP_BLOOM_FILTER(:BF0000,"R"."LISTING_ID"(+)))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

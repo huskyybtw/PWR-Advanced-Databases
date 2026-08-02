@@ -1,0 +1,70 @@
+=== AGGREGATE REPORT: query07 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 0.8838
+Min Duration (s): 0.8778
+Max Duration (s): 0.8954
+Variance Duration: 0.000100
+Avg Cost: 49454.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (0)
+
+--- Individual Run Files ---
+- query07_massive_cascade_purge_partition_base_run1_20260522_182707.txt
+- query07_massive_cascade_purge_partition_base_run2_20260522_182707.txt
+- query07_massive_cascade_purge_partition_base_run3_20260522_182707.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 3408503390
+ 
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                         | Name                           | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT                                  |                                |  1295 | 90650 |       | 49454   (1)| 00:00:02 |       |       |
+|   1 |  DELETE                                           | CALENDAR                       |       |       |       |            |          |       |       |
+|   2 |   MERGE JOIN                                      |                                |  1295 | 90650 |       | 49454   (1)| 00:00:02 |       |       |
+|   3 |    SORT JOIN                                      |                                |   518K|  6576K|       | 49408   (1)| 00:00:02 |       |       |
+|   4 |     VIEW                                          | VW_NSO_1                       |   518K|  6576K|       | 49408   (1)| 00:00:02 |       |       |
+|*  5 |      FILTER                                       |                                |       |       |       |            |          |       |       |
+|   6 |       SORT GROUP BY                               |                                |   518K|    84M|       | 49408   (1)| 00:00:02 |       |       |
+|*  7 |        HASH JOIN RIGHT OUTER                      |                                |   518K|    84M|       | 49395   (1)| 00:00:02 |       |       |
+|*  8 |         TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED| CALENDAR                       |    40 |  2280 |       |    45   (0)| 00:00:01 | ROWID | ROWID |
+|*  9 |          INDEX RANGE SCAN                         | IDX_CALENDAR_TRUNC_DATE_FBI_V5 |   159 |       |       |     3   (0)| 00:00:01 |       |       |
+|* 10 |         HASH JOIN OUTER                           |                                |   518K|    56M|  5704K| 49349   (1)| 00:00:02 |       |       |
+|* 11 |          HASH JOIN RIGHT OUTER                    |                                | 63487 |  4959K|  1608K|  5905   (1)| 00:00:01 |       |       |
+|  12 |           PARTITION RANGE ITERATOR                |                                | 40962 |  1120K|       |  1059   (1)| 00:00:01 |   KEY |1048575|
+|* 13 |            TABLE ACCESS FULL                      | LISTING_SCRAPE_SNAPSHOT        | 40962 |  1120K|       |  1059   (1)| 00:00:01 |   KEY |1048575|
+|* 14 |           HASH JOIN                               |                                | 63487 |  3223K|  1520K|  4576   (1)| 00:00:01 |       |       |
+|* 15 |            TABLE ACCESS FULL                      | HOSTS                          | 40884 |  1038K|       |   819   (1)| 00:00:01 |       |       |
+|  16 |            TABLE ACCESS FULL                      | LISTINGS                       | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+|  17 |          VIEW                                     | index$_join$_005               |   454K|    15M|       | 42153   (1)| 00:00:02 |       |       |
+|* 18 |           HASH JOIN                               |                                |       |       |       |            |          |       |       |
+|* 19 |            INDEX FAST FULL SCAN                   | IDX_REVIEWS_LISTING_DATE_V5    |   454K|    15M|       | 26039   (1)| 00:00:02 |       |       |
+|  20 |            INDEX FAST FULL SCAN                   | REVIEWS_V5_PK                  |   454K|    15M|       | 26653   (1)| 00:00:02 |       |       |
+|* 21 |    SORT JOIN                                      |                                |   159 |  9063 |       |    46   (3)| 00:00:01 |       |       |
+|* 22 |     TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED    | CALENDAR                       |   159 |  9063 |       |    45   (0)| 00:00:01 | ROWID | ROWID |
+|* 23 |      INDEX RANGE SCAN                             | IDX_CALENDAR_TRUNC_DATE_FBI_V5 |   159 |       |       |     3   (0)| 00:00:01 |       |       |
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   5 - filter(COUNT("R"."REVIEW_ID")=0 AND COUNT("C_RECENT"."CALENDAR_ID")=0 AND MAX("SNAP"."PRICE")=MIN("SNAP"."PRICE"))
+   7 - access("L"."LISTING_ID"="C_RECENT"."LISTING_ID"(+))
+   8 - filter("C_RECENT"."AVAILABLE"(+)=0 AND "C_RECENT"."date"(+)<=CURRENT_DATE AND "C_RECENT"."date"(+)>=CURRENT_DATE-30)
+   9 - access("C_RECENT"."SYS_NC00008$"(+)>=TRUNC(CURRENT_DATE-30) AND "C_RECENT"."SYS_NC00008$"(+)<=TRUNC(CURRENT_DATE))
+  10 - access("L"."LISTING_ID"="R"."LISTING_ID"(+))
+  11 - access("L"."LISTING_ID"="SNAP"."LISTING_ID"(+))
+  13 - filter("SNAP"."SCRAPED_AT"(+)>=CURRENT_DATE-365)
+  14 - access("L"."HOST_ID"="H"."HOST_ID")
+  15 - filter("H"."HOST_IS_SUPERHOST"=0)
+  18 - access(ROWID=ROWID)
+  19 - filter("R"."date">=CURRENT_DATE-365)
+  21 - access("C"."LISTING_ID"="LISTING_ID")
+       filter("C"."LISTING_ID"="LISTING_ID")
+  22 - filter("C"."date"<CURRENT_DATE-365)
+  23 - access(TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(CURRENT_DATE-365))
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

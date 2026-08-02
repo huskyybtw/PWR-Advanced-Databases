@@ -1,0 +1,62 @@
+=== AGGREGATE REPORT: query02 ===
+Tag: partition_base
+Populations: 3
+Avg Total Duration (s): 3.7087
+Min Duration (s): 3.4950
+Max Duration (s): 4.1116
+Variance Duration: 0.121896
+Avg Cost: 207000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (279)
+
+--- Individual Run Files ---
+- query02_superhost_portfolio_analysis_partition_base_run1_20260522_182707.txt
+- query02_superhost_portfolio_analysis_partition_base_run2_20260522_182707.txt
+- query02_superhost_portfolio_analysis_partition_base_run3_20260522_182707.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 397237463
+ 
+----------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                      | Name                        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+----------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT               |                             |  2911 |   540K|       |   207K  (1)| 00:00:09 |
+|   1 |  SORT ORDER BY                 |                             |  2911 |   540K|  1002M|   207K  (1)| 00:00:09 |
+|*  2 |   FILTER                       |                             |       |       |       |            |          |
+|   3 |    HASH GROUP BY               |                             |  2911 |   540K|  1002M|   207K  (1)| 00:00:09 |
+|   4 |     VIEW                       | VW_DAG_1                    |  5002K|   906M|       | 61946   (1)| 00:00:03 |
+|   5 |      HASH GROUP BY             |                             |  5002K|  1893M|       | 61946   (1)| 00:00:03 |
+|*  6 |       HASH JOIN OUTER          |                             |  5002K|  1893M|  5880K| 61808   (1)| 00:00:03 |
+|*  7 |        HASH JOIN               |                             | 16080 |  5684K|       |  8265   (1)| 00:00:01 |
+|*  8 |         TABLE ACCESS FULL      | LISTINGS                    | 16081 |   816K|       |  3568   (1)| 00:00:01 |
+|*  9 |         HASH JOIN RIGHT SEMI   |                             | 15750 |  4768K|  1552K|  4696   (1)| 00:00:01 |
+|  10 |          VIEW                  | VW_NSO_1                    | 63488 |   806K|       |  3570   (1)| 00:00:01 |
+|* 11 |           FILTER               |                             |       |       |       |            |          |
+|  12 |            HASH GROUP BY       |                             | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  13 |             VIEW               | VW_DAG_0                    | 63488 |  2418K|       |  3570   (1)| 00:00:01 |
+|  14 |              HASH GROUP BY     |                             | 63488 |  9610K|       |  3570   (1)| 00:00:01 |
+|* 15 |               TABLE ACCESS FULL| LISTINGS                    | 63488 |  9610K|       |  3568   (1)| 00:00:01 |
+|* 16 |          TABLE ACCESS FULL     | HOSTS                       | 15750 |  4568K|       |   819   (1)| 00:00:01 |
+|  17 |        VIEW                    | index$_join$_004            |  4986K|   166M|       | 42153   (1)| 00:00:02 |
+|* 18 |         HASH JOIN              |                             |       |       |       |            |          |
+|  19 |          INDEX FAST FULL SCAN  | IDX_REVIEWS_LISTING_DATE_V5 |  4986K|   166M|       | 26039   (1)| 00:00:02 |
+|  20 |          INDEX FAST FULL SCAN  | REVIEWS_V5_PK               |  4986K|   166M|       | 26653   (1)| 00:00:02 |
+----------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter(NVL(SUM("ITEM_5"),0)>50)
+   6 - access("LST"."LISTING_ID"="R"."LISTING_ID"(+))
+   7 - access("H"."HOST_ID"="LST"."HOST_ID")
+   8 - filter("LST"."INSTANT_BOOKABLE"=1)
+   9 - access("H"."HOST_ID"="HOST_ID")
+  11 - filter(COUNT("ITEM_1")>=2 AND NVL(SUM("ITEM_3"),0)>=3)
+  15 - filter("PROPERTY_TYPE" IS NOT NULL AND "PROPERTY_TYPE" NOT LIKE '%Shared%')
+  16 - filter("H"."HOST_IS_SUPERHOST"=1 AND ("H"."HOST_RESPONSE_TIME"='within a few hours' OR 
+              "H"."HOST_RESPONSE_TIME"='within an hour'))
+  18 - access(ROWID=ROWID)
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

@@ -1,0 +1,139 @@
+Query Name: query05_massive_snapshot_generation
+Tag: inmemory_capacity_high
+Run Index: 1
+SQL File: query05_massive_snapshot_generation.sql
+Statement Type: INSERT
+Started At: 2026-06-12T14:59:20.180816
+Execution Duration (s): 1.2683
+Fetch Duration (s): 0.0000
+Total Duration (s): 1.2683
+Rows Impacted: 656
+Result Signature: ROWS:656
+-- SQL --
+INSERT INTO
+    listing_scrape_snapshot (
+        listing_id,
+        scrape_id,
+        scraped_at,
+        price,
+        minimum_nights,
+        number_of_reviews,
+        last_review,
+        reviews_per_month,
+        availability_365,
+        number_of_reviews_ltm
+    )
+WITH
+    cal AS (
+        SELECT
+            c.listing_id,
+            AVG(c.price) AS avg_price,
+            AVG(c.minimum_nights) AS avg_min_nights,
+            SUM(
+                CASE
+                    WHEN c.available = 1 THEN 1
+                    ELSE 0
+                END
+            ) AS free_days
+        FROM calendar c
+        WHERE
+            c."date" >= DATE '2025-12-01'
+            AND c."date" < DATE '2026-01-01'
+        GROUP BY
+            c.listing_id
+    ),
+    rev AS (
+        SELECT
+            r.listing_id,
+            COUNT(*) AS reviews_cnt,
+            MAX(r."date") AS last_review,
+            COUNT(
+                CASE
+                    WHEN r."date" >= ADD_MONTHS(DATE '2025-12-31', -12) THEN 1
+                END
+            ) AS reviews_ltm
+        FROM reviews r
+        GROUP BY
+            r.listing_id
+    ),
+    ranked AS (
+        SELECT
+            l.listing_id,
+            n.location_id,
+            cal.avg_price,
+            cal.avg_min_nights,
+            NVL(rev.reviews_cnt, 0) AS reviews_cnt,
+            rev.last_review,
+            NVL(rev.reviews_ltm, 0) AS reviews_ltm,
+            cal.free_days,
+            DENSE_RANK() OVER (
+                PARTITION BY
+                    n.location_id
+                ORDER BY NVL(rev.reviews_cnt, 0) DESC, cal.avg_price DESC
+            ) AS rnk
+        FROM
+            listings l
+            JOIN neighbourhoods n ON n.neighbourhood_id = l.neighbourhood_id
+            JOIN cal ON cal.listing_id = l.listing_id
+            LEFT JOIN rev ON rev.listing_id = l.listing_id
+    )
+SELECT
+    listing_id,
+    900000 + ROW_NUMBER() OVER (
+        ORDER BY location_id, listing_id
+    ) AS scrape_id,
+    SYSDATE,
+    avg_price,
+    avg_min_nights,
+    reviews_cnt,
+    last_review,
+    ROUND(reviews_ltm / 12, 2),
+    free_days,
+    reviews_ltm
+FROM ranked
+WHERE
+    rnk <= 20
+-- Estimated Execution Plan --
+Plan hash value: 2738639543
+ 
+------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                            | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                     |                         |   152M|    15G|       |  8650K  (1)| 00:05:38 |
+|   1 |  LOAD TABLE CONVENTIONAL             | LISTING_SCRAPE_SNAPSHOT |       |       |       |            |          |
+|   2 |   WINDOW SORT                        |                         |   152M|    15G|    18G|  8650K  (1)| 00:05:38 |
+|*  3 |    VIEW                              |                         |   152M|    15G|       |  4995K  (1)| 00:03:16 |
+|*  4 |     WINDOW SORT PUSHED RANK          |                         |   152M|    20G|    22G|  4995K  (1)| 00:03:16 |
+|*  5 |      HASH JOIN                       |                         |   152M|    20G|       |   105K  (2)| 00:00:05 |
+|   6 |       TABLE ACCESS FULL              | NEIGHBOURHOODS          |  2497 | 64922 |       |     5   (0)| 00:00:01 |
+|*  7 |       HASH JOIN OUTER                |                         |   152M|    16G|   185M|   104K  (1)| 00:00:05 |
+|   8 |        MERGE JOIN                    |                         |  2339K|   158M|       |  7965   (2)| 00:00:01 |
+|   9 |         SORT JOIN                    |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+|  10 |          VIEW                        |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+|  11 |           SORT GROUP BY              |                         |  2339K|   120M|       |  3924   (3)| 00:00:01 |
+|* 12 |            TABLE ACCESS INMEMORY FULL| CALENDAR                |  2339K|   120M|       |  3863   (1)| 00:00:01 |
+|* 13 |         SORT JOIN                    |                         | 63488 |  1612K|  4504K|  4040   (1)| 00:00:01 |
+|  14 |          TABLE ACCESS INMEMORY FULL  | LISTINGS                | 63488 |  1612K|       |  3568   (1)| 00:00:01 |
+|  15 |        VIEW                          |                         |  4130K|   189M|       | 75314   (1)| 00:00:03 |
+|  16 |         SORT GROUP BY                |                         |  4130K|    86M|       | 75314   (1)| 00:00:03 |
+|  17 |          TABLE ACCESS INMEMORY FULL  | REVIEWS                 |  4130K|    86M|       | 75245   (1)| 00:00:03 |
+------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - filter("RNK"<=20)
+   4 - filter(DENSE_RANK() OVER ( PARTITION BY "N"."LOCATION_ID" ORDER BY NVL("REV"."REVIEWS_CNT",0) DESC 
+              ,INTERNAL_FUNCTION("CAL"."AVG_PRICE") DESC )<=20)
+   5 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+   7 - access("REV"."LISTING_ID"(+)="L"."LISTING_ID")
+  12 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+  13 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
+       filter("CAL"."LISTING_ID"="L"."LISTING_ID")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

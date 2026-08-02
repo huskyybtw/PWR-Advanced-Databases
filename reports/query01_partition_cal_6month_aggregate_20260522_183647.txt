@@ -1,0 +1,77 @@
+=== AGGREGATE REPORT: query01 ===
+Tag: partition_cal_6month
+Populations: 3
+Avg Total Duration (s): 0.8981
+Min Duration (s): 0.8833
+Max Duration (s): 0.9213
+Variance Duration: 0.000415
+Avg Cost: 3085000000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (6458)
+
+--- Individual Run Files ---
+- query01_historical_price_fluctuation_partition_cal_6month_run1_20260522_183647.txt
+- query01_historical_price_fluctuation_partition_cal_6month_run2_20260522_183647.txt
+- query01_historical_price_fluctuation_partition_cal_6month_run3_20260522_183647.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 1936373242
+ 
+----------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                           |    15G|     9T|       |  3085M  (1)| 33:28:32 |       |       |
+|   1 |  TEMP TABLE TRANSFORMATION               |                           |       |       |       |            |          |       |       |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)| SYS_TEMP_0FD9D6649_490DAE |       |       |       |            |          |       |       |
+|   3 |    HASH GROUP BY                         |                           |  1582K|    75M|       |  1979   (3)| 00:00:01 |       |       |
+|   4 |     PARTITION RANGE SINGLE               |                           |  1582K|    75M|       |  1938   (1)| 00:00:01 |    13 |    13 |
+|*  5 |      TABLE ACCESS FULL                   | CALENDAR                  |  1582K|    75M|       |  1938   (1)| 00:00:01 |    13 |    13 |
+|   6 |   SORT ORDER BY                          |                           |    15G|     9T|    10T|  3085M  (1)| 33:28:32 |       |       |
+|*  7 |    HASH JOIN                             |                           |    15G|     9T|    46M|  1256K (68)| 00:00:50 |       |       |
+|   8 |     VIEW                                 |                           |  1582K|    28M|       |  8982   (1)| 00:00:01 |       |       |
+|   9 |      HASH GROUP BY                       |                           |  1582K|   107M|       |  8982   (1)| 00:00:01 |       |       |
+|* 10 |       HASH JOIN                          |                           |  1582K|   107M|       |  8941   (1)| 00:00:01 |       |       |
+|  11 |        TABLE ACCESS FULL                 | NEIGHBOURHOODS            |  2497 | 64922 |       |     5   (0)| 00:00:01 |       |       |
+|* 12 |        HASH JOIN                         |                           |  1582K|    67M|  2360K|  8932   (1)| 00:00:01 |       |       |
+|  13 |         TABLE ACCESS FULL                | LISTINGS                  | 63488 |  1612K|       |  3568   (1)| 00:00:01 |       |       |
+|  14 |         VIEW                             |                           |  1582K|    28M|       |  2920   (1)| 00:00:01 |       |       |
+|  15 |          TABLE ACCESS FULL               | SYS_TEMP_0FD9D6649_490DAE |  1582K|    67M|       |  2920   (1)| 00:00:01 |       |       |
+|* 16 |     HASH JOIN                            |                           |  8097K|  5204M|       |   134K  (1)| 00:00:06 |       |       |
+|  17 |      TABLE ACCESS FULL                   | LOCATIONS                 |    41 |  5822 |       |     3   (0)| 00:00:01 |       |       |
+|* 18 |      HASH JOIN                           |                           |  8097K|  4108M|       |   134K  (1)| 00:00:06 |       |       |
+|  19 |       TABLE ACCESS FULL                  | NEIGHBOURHOODS            |  2497 |   377K|       |     5   (0)| 00:00:01 |       |       |
+|* 20 |       HASH JOIN                          |                           |  8097K|  2911M|    66M|   134K  (1)| 00:00:06 |       |       |
+|* 21 |        VIEW                              |                           |  1582K|    48M|       |  2920   (1)| 00:00:01 |       |       |
+|  22 |         TABLE ACCESS FULL                | SYS_TEMP_0FD9D6649_490DAE |  1582K|    67M|       |  2920   (1)| 00:00:01 |       |       |
+|* 23 |        FILTER                            |                           |       |       |       |            |          |       |       |
+|* 24 |         HASH JOIN RIGHT OUTER            |                           |   324K|   106M|    14M|   122K  (1)| 00:00:05 |       |       |
+|  25 |          VIEW                            |                           |   324K|    10M|       |   115K  (1)| 00:00:05 |       |       |
+|  26 |           HASH GROUP BY                  |                           |   324K|  6970K|       |   115K  (1)| 00:00:05 |       |       |
+|* 27 |            TABLE ACCESS FULL             | REVIEWS                   |   324K|  6970K|       |   115K  (1)| 00:00:05 |       |       |
+|* 28 |          HASH JOIN                       |                           | 63488 |    18M|  8760K|  5353   (1)| 00:00:01 |       |       |
+|  29 |           TABLE ACCESS FULL              | HOSTS                     | 58214 |  8072K|       |   819   (1)| 00:00:01 |       |       |
+|  30 |           TABLE ACCESS FULL              | LISTINGS                  | 63488 |    10M|       |  3568   (1)| 00:00:01 |       |       |
+----------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   5 - filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 2026-01-01 00:00:00', 
+              'syyyy-mm-dd hh24:mi:ss') AND TRUNC(INTERNAL_FUNCTION("date"))>=TRUNC(TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND 
+              TRUNC(INTERNAL_FUNCTION("date"))<=TRUNC(TO_DATE(' 2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')))
+   7 - access("CPA"."LOCATION_ID"="LOC"."LOCATION_ID")
+       filter("CS"."AVG_PRICE_DEC">"CPA"."CITY_AVG_PRICE")
+  10 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  12 - access("L"."LISTING_ID"="CS"."LISTING_ID")
+  16 - access("LOC"."LOCATION_ID"="N"."LOCATION_ID")
+  18 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+  20 - access("CS"."LISTING_ID"="L"."LISTING_ID")
+  21 - filter("CS"."AVAILABLE_DAYS_DEC">=20)
+  23 - filter(NVL("RS"."REVIEW_COUNT",0)<=2)
+  24 - access("RS"."LISTING_ID"(+)="L"."LISTING_ID")
+  27 - filter("R"."date">=TO_DATE(' 2024-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+  28 - access("H"."HOST_ID"="L"."HOST_ID")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)

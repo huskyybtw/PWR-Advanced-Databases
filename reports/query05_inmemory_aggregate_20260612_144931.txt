@@ -1,0 +1,58 @@
+=== AGGREGATE REPORT: query05 ===
+Tag: inmemory
+Populations: 1
+Avg Total Duration (s): 1.7206
+Min Duration (s): 1.7206
+Max Duration (s): 1.7206
+Variance Duration: 0.000000
+Avg Cost: 8653000.00
+Output Signature: SAME
+Rows Impacted Summary: SAME (656)
+
+--- Individual Run Files ---
+- query05_massive_snapshot_generation_inmemory_run1_20260612_144931.txt
+
+-- Estimated Execution Plan --
+Plan hash value: 2738639543
+ 
+------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                            | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                     |                         |   152M|    15G|       |  8653K  (1)| 00:05:39 |
+|   1 |  LOAD TABLE CONVENTIONAL             | LISTING_SCRAPE_SNAPSHOT |       |       |       |            |          |
+|   2 |   WINDOW SORT                        |                         |   152M|    15G|    18G|  8653K  (1)| 00:05:39 |
+|*  3 |    VIEW                              |                         |   152M|    15G|       |  4998K  (1)| 00:03:16 |
+|*  4 |     WINDOW SORT PUSHED RANK          |                         |   152M|    20G|    22G|  4998K  (1)| 00:03:16 |
+|*  5 |      HASH JOIN                       |                         |   152M|    20G|       |   108K  (2)| 00:00:05 |
+|   6 |       TABLE ACCESS FULL              | NEIGHBOURHOODS          |  2497 | 64922 |       |     5   (0)| 00:00:01 |
+|*  7 |       HASH JOIN OUTER                |                         |   152M|    16G|   185M|   107K  (1)| 00:00:05 |
+|   8 |        MERGE JOIN                    |                         |  2339K|   158M|       |  4537   (3)| 00:00:01 |
+|   9 |         SORT JOIN                    |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+|  10 |          VIEW                        |                         |  2339K|   100M|       |  3924   (3)| 00:00:01 |
+|  11 |           SORT GROUP BY              |                         |  2339K|   120M|       |  3924   (3)| 00:00:01 |
+|* 12 |            TABLE ACCESS INMEMORY FULL| CALENDAR                |  2339K|   120M|       |  3863   (1)| 00:00:01 |
+|* 13 |         SORT JOIN                    |                         | 63488 |  1612K|  4504K|   613   (2)| 00:00:01 |
+|  14 |          TABLE ACCESS INMEMORY FULL  | LISTINGS                | 63488 |  1612K|       |   140   (6)| 00:00:01 |
+|  15 |        VIEW                          |                         |  4130K|   189M|       | 82035   (1)| 00:00:04 |
+|  16 |         SORT GROUP BY                |                         |  4130K|    86M|       | 82035   (1)| 00:00:04 |
+|  17 |          TABLE ACCESS INMEMORY FULL  | REVIEWS                 |  4130K|    86M|       | 81958   (1)| 00:00:04 |
+------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - filter("RNK"<=20)
+   4 - filter(DENSE_RANK() OVER ( PARTITION BY "N"."LOCATION_ID" ORDER BY NVL("REV"."REVIEWS_CNT",0) DESC 
+              ,INTERNAL_FUNCTION("CAL"."AVG_PRICE") DESC )<=20)
+   5 - access("N"."NEIGHBOURHOOD_ID"="L"."NEIGHBOURHOOD_ID")
+   7 - access("REV"."LISTING_ID"(+)="L"."LISTING_ID")
+  12 - inmemory("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+       filter("C"."date">=TO_DATE(' 2025-12-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss') AND "C"."date"<TO_DATE(' 
+              2026-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+  13 - access("CAL"."LISTING_ID"="L"."LISTING_ID")
+       filter("CAL"."LISTING_ID"="L"."LISTING_ID")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
